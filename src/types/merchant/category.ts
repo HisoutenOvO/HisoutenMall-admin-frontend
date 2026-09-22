@@ -1,11 +1,8 @@
+import type { PageQuery } from '@/types/common.ts'
 
-export interface MerchantCategoryListVO {
-    id: number
-    parentId: number
-    name: string
-    level: number
-    sort: number
-    status: number
-    deleted: number
+
+export interface MerchantCategoryPageQueryDTO extends PageQuery {
+    keyword?: string
 }
+
 

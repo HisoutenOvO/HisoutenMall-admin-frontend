@@ -12,6 +12,7 @@ export interface MerchantProductPageResultVO {
     brandName: string
     deleted: number
     mainImage: string
+    updateTime: string
 }
 
 export interface MerchantProductDetailVO {
@@ -36,7 +37,7 @@ export interface MerchantProductAddDTO {
     name: string
     merchantId: number
     subtitle?: string
-    categoryId: number
+    categoryId?: number
     brandId?: number
     mainImage?: string
     detail?: string
@@ -46,7 +47,7 @@ export interface MerchantProductAddDTO {
 export interface MerchantProductUpdateDTO {
     name: string
     subtitle?: string
-    categoryId: number
+    categoryId?: number
     brandId?: number
     mainImage?: string
     detail?: string
@@ -56,4 +57,19 @@ export interface MerchantProductPageQueryDTO extends PageQuery {
     keyword?: string
     categoryId?: number
     status?: number
+}
+
+export interface Product{
+    id: number
+    name: string
+    merchantId: number
+    brandId: number
+    categoryId: number
+    subtitle: string
+    mainImage: string
+    detail: string
+    status?: number
+    deleted?: number
+    createTime?: string
+    updateTime?: string
 }

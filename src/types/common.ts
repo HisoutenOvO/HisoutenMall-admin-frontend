@@ -13,6 +13,6 @@ export interface PageResult<T> {
 
 // 分页入参基类
 export interface PageQuery {
-    pageNum: number
+    page: number
     pageSize: number
 }
