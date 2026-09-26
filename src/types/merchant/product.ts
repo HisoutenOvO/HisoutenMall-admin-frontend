@@ -35,7 +35,6 @@ export interface MerchantProductDetailVO {
 
 export interface MerchantProductAddDTO {
     name: string
-    merchantId: number
     subtitle?: string
     categoryId?: number
     brandId?: number
@@ -57,6 +56,7 @@ export interface MerchantProductPageQueryDTO extends PageQuery {
     keyword?: string
     categoryId?: number
     status?: number
+    deleted?: number   // 0-正常，1-回收站
 }
 
 export interface Product{

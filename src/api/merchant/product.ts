@@ -32,7 +32,7 @@ export const deleteMerchantProductLogicApi = (productId: number) =>
     request.delete<Result>(`/merchant/product/${productId}/deleted`)
 
 //商家恢复逻辑删除商品接口
-export const updateMerchantProductDeletedApi = (productId: number) =>
+export const restoreMerchantProductApi = (productId: number) =>
     request.put<Result>(`/merchant/product/${productId}/deleted`)
 
 //商家物理删除商品接口
