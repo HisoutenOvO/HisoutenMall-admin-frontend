@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import type {
   MerchantProductPageQueryDTO,
-  MerchantProductPageResultVO
+  MerchantProductPageResultVO, ProductSkuItemDTO
 } from '@/types/merchant/product'
 import { nextTick, onMounted, ref } from 'vue'
 import type { FormInstance } from 'element-plus'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import type { CategoryListVO } from '@/types/merchant/category'
+import type { CategoryTreeVO } from '@/types/common/category'
+import { getMerchantCategoryTreeApi } from '@/api/merchant/category'
 import {
   addMerchantProductApi,
   deleteMerchantProductLogicApi,
@@ -18,6 +19,29 @@ import {
   updateMerchantProductStatusApi
 } from '@/api/merchant/product'
 import { getMerchantCategoryListApi } from '@/api/merchant/category'
+import type {BrandListVO} from "@/types/common/brand.ts";
+import {getMerchantBrandListApi} from "@/api/merchant/brand.ts";
+import SkuManageDialog from "@/components/SkuManageDialog.vue";
+
+const skuDialogVisible = ref(false)
+const skuDialogProductId = ref<number | null>(null)
+
+const openSkuDialog = () => {
+  if (!product.value.id) return
+  skuDialogProductId.value = product.value.id
+  skuDialogVisible.value = true
+}
+
+// 关闭后刷新编辑弹窗里的 skuList
+const handleSkuRefresh = async () => {
+  if (!product.value.id) return
+  const res = await getMerchantProductDetailApi(product.value.id)
+  if (res.code === 1) {
+    product.value.skuList = res.data.skuList
+        .filter(s => s.deleted === 0)
+        .map(s => ({ skuId: s.id, specs: s.specs, price: s.price, stock: s.stock, image: s.image }))
+  }
+}
 
 // 当前 tab：normal-在售，recycle-回收站
 const activeTab = ref<'normal' | 'recycle'>('normal')
@@ -28,6 +52,7 @@ const searchProduct = ref<MerchantProductPageQueryDTO>({
   pageSize: 10,
   keyword: '',
   categoryId: undefined,
+  brandId: undefined,
   status: undefined,
   deleted: 0
 })
@@ -36,7 +61,10 @@ const searchProduct = ref<MerchantProductPageQueryDTO>({
 const productList = ref<MerchantProductPageResultVO[]>([])
 
 // 分类列表
-const categoryList = ref<CategoryListVO[]>([])
+const categoryTree = ref<CategoryTreeVO[]>([])
+
+// 品牌列表
+const brandList = ref<BrandListVO[]>([])
 
 // 分页
 const total = ref(0)
@@ -55,6 +83,7 @@ interface ProductForm {
   brandId?: number
   mainImage?: string
   detail?: string
+  skuList: ProductSkuItemDTO[]
 }
 
 const product = ref<ProductForm>({
@@ -63,7 +92,8 @@ const product = ref<ProductForm>({
   categoryId: undefined,
   brandId: undefined,
   mainImage: '',
-  detail: ''
+  detail: '',
+  skuList: []
 })
 
 // 分页查询
@@ -103,7 +133,8 @@ const addProduct = async () => {
     categoryId: undefined,
     brandId: undefined,
     mainImage: '',
-    detail: ''
+    detail: '',
+    skuList: []
   }
   dialogFormVisible.value = true
   await nextTick()
@@ -123,7 +154,16 @@ const edit = async (productId: number) => {
       categoryId: detail.categoryId,
       brandId: detail.brandId,
       mainImage: detail.mainImage,
-      detail: detail.detail
+      detail: detail.detail,
+      skuList: detail.skuList
+          .filter(s => s.deleted === 0)
+          .map(s => ({
+            skuId: s.id,
+            specs: s.specs,
+            price: s.price,
+            stock: s.stock,
+            image: s.image
+          }))
     }
     dialogFormVisible.value = true
     await nextTick()
@@ -140,13 +180,18 @@ const save = async () => {
   } catch {
     return
   }
+  if (!product.value.skuList || product.value.skuList.length === 0) {
+    ElMessage.error('至少需要一个 SKU')
+    return
+  }
   const formData = {
     name: product.value.name,
     subtitle: product.value.subtitle,
     categoryId: product.value.categoryId,
     brandId: product.value.brandId,
     mainImage: product.value.mainImage,
-    detail: product.value.detail
+    detail: product.value.detail,
+    skuList: product.value.skuList
   }
 
   let result
@@ -165,6 +210,20 @@ const save = async () => {
   }
 }
 
+//增加sku
+const addSkuRow = () => {
+  product.value.skuList.push({ specs: '', price: 0, stock: 0, image: '' })
+}
+
+//删除sku
+const removeSkuRow = (index: number) => {
+  if (product.value.skuList.length <= 1) {
+    ElMessage.warning('至少保留一个 SKU')
+    return
+  }
+  product.value.skuList.splice(index, 1)
+}
+
 // 换页
 const handleSizeChange = (val: number) => {
   searchProduct.value.pageSize = val
@@ -177,10 +236,20 @@ const handleCurrentChange = (val: number) => {
 }
 
 // 加载分类列表
-const loadCategoryList = async () => {
-  const result = await getMerchantCategoryListApi()
+const loadCategoryTree = async () => {
+  const result = await getMerchantCategoryTreeApi()
   if (result.code === 1) {
-    categoryList.value = result.data
+    categoryTree.value = result.data
+  } else {
+    ElMessage.error(result.msg)
+  }
+}
+
+// 加载品牌列表
+const loadBrandList = async () => {
+  const result = await getMerchantBrandListApi()
+  if (result.code === 1) {
+    brandList.value = result.data
   } else {
     ElMessage.error(result.msg)
   }
@@ -275,7 +344,8 @@ const rules = {
 }
 
 onMounted(() => {
-  loadCategoryList()
+  loadCategoryTree()
+  loadBrandList()
   search()
 })
 </script>
@@ -295,8 +365,18 @@ onMounted(() => {
         <el-input v-model="searchProduct.keyword" placeholder="请输入商品名称" clearable />
       </el-form-item>
       <el-form-item label="按分类查询">
-        <el-select v-model="searchProduct.categoryId" placeholder="请选择分类" style="width: 180px" clearable>
-          <el-option v-for="c in categoryList" :key="c.id" :label="c.name" :value="c.id" />
+        <el-cascader
+            v-model="searchProduct.categoryId"
+            :options="categoryTree"
+            :props="{ value: 'id', label: 'name', checkStrictly: true, emitPath: false }"
+            placeholder="请选择分类"
+            clearable
+            style="width: 180px"
+        />
+      </el-form-item>
+      <el-form-item label="按品牌查询">
+        <el-select v-model="searchProduct.brandId" placeholder="请选择品牌" style="width: 180px" clearable>
+          <el-option v-for="b in brandList" :key="b.id" :label="b.name" :value="b.id" />
         </el-select>
       </el-form-item>
       <!-- 状态筛选只在"在售"tab显示 -->
@@ -317,10 +397,10 @@ onMounted(() => {
 
     <!-- 商品表格 -->
     <el-table :data="productList" border style="width: 100%" class="container">
-      <el-table-column prop="name" label="商品名称" width="180" align="center" />
-      <el-table-column prop="brandName" label="品牌名称" width="100" align="center" />
-      <el-table-column prop="categoryName" label="商品分类" width="100" align="center" />
-      <el-table-column prop="mainImage" label="商品图片" width="120" align="center">
+      <el-table-column prop="name" label="商品名称" width="200" align="center" />
+      <el-table-column prop="brandName" label="品牌名称" width="160" align="center" />
+      <el-table-column prop="categoryName" label="商品分类" width="140" align="center" />
+      <el-table-column prop="mainImage" label="商品图片" width="140" align="center">
         <template #default="scope">
           <el-image :src="scope.row.mainImage" style="width: 60px; height: 60px" fit="cover">
             <template #error>
@@ -329,7 +409,6 @@ onMounted(() => {
           </el-image>
         </template>
       </el-table-column>
-      <el-table-column prop="merchantName" label="商家名称" width="140" align="center" />
       <el-table-column prop="status" label="状态" width="100" align="center">
         <template #default="scope">
           <el-tag :type="scope.row.status === 1 ? 'success' : 'info'">
@@ -337,8 +416,8 @@ onMounted(() => {
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="updateTime" label="最后操作时间" align="center" />
-      <el-table-column label="操作" align="center" width="280">
+      <el-table-column prop="updateTime" label="最后操作时间" align="center"/>
+      <el-table-column label="操作" align="center" width="240">
         <template #default="scope">
           <!-- 正常商品 -->
           <template v-if="scope.row.deleted === 0">
@@ -355,6 +434,7 @@ onMounted(() => {
 
           <!-- 回收站 -->
           <template v-else>
+            <el-button type="primary" size="small" @click="edit(scope.row.id)">编辑</el-button>
             <el-button type="success" size="small" @click="restore(scope.row.id)">恢复</el-button>
             <el-button type="danger" size="small" @click="physicalDelete(scope.row.id)">彻底删除</el-button>
           </template>
@@ -363,7 +443,7 @@ onMounted(() => {
     </el-table>
 
     <!-- 新增/修改对话框 -->
-    <el-dialog v-model="dialogFormVisible" :title="dialogTitle" width="500">
+    <el-dialog v-model="dialogFormVisible" :title="dialogTitle" width="800">
       <el-form :model="product" :rules="rules" ref="productFormRef">
         <el-form-item label="商品名称" label-width="80px" prop="name">
           <el-input v-model="product.name" autocomplete="off" placeholder="请输入商品名称" />
@@ -376,16 +456,64 @@ onMounted(() => {
         </el-form-item>
         <el-form-item label="商品品牌" label-width="80px" prop="brandId">
           <el-select v-model="product.brandId" placeholder="请选择">
-            <!-- TODO: 品牌列表 -->
+            <el-option v-for="b in brandList" :key="b.id" :label="b.name" :value="b.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="商品分类" label-width="80px" prop="categoryId">
-          <el-select v-model="product.categoryId" placeholder="请选择">
-            <el-option v-for="c in categoryList" :key="c.id" :label="c.name" :value="c.id" />
-          </el-select>
+          <el-cascader
+              v-model="product.categoryId"
+              :options="categoryTree"
+              :props="{ value: 'id', label: 'name', checkStrictly: false, emitPath: false }"
+              placeholder="请选择分类"
+              clearable
+              style="width: 100%"
+          />
         </el-form-item>
         <el-form-item label="商品详情" label-width="80px" prop="detail">
           <el-input v-model="product.detail" type="textarea" :rows="4" placeholder="请填写商品详情" />
+        </el-form-item>
+        <el-form-item label="SKU列表" label-width="80px">
+          <div style="margin-bottom: 10px">
+            <el-button type="primary" size="small" @click="addSkuRow">+ 新增 SKU</el-button>
+            <el-button
+                v-if="product.id"
+                type="warning"
+                size="small"
+                @click="openSkuDialog"
+            >SKU 操作</el-button>
+          </div>
+          <el-table :data="product.skuList" border style="margin-top: 10px">
+            <el-table-column label="规格" min-width="140">
+              <template #default="{ row }">
+                <el-input v-model="row.specs" placeholder="如：红色,64G" />
+              </template>
+            </el-table-column>
+            <el-table-column label="价格" width="120">
+              <template #default="{ row }">
+                <el-input v-model.number="row.price" type="number" />
+              </template>
+            </el-table-column>
+            <el-table-column label="库存" width="100">
+              <template #default="{ row }">
+                <el-input v-model.number="row.stock" type="number" />
+              </template>
+            </el-table-column>
+            <el-table-column label="图片" min-width="140">
+              <template #default="{ row }">
+                <el-input v-model="row.image" />
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="80">
+              <template #default="{ $index }">
+                <el-button type="danger" size="small" @click="removeSkuRow($index)">删除</el-button>
+              </template>
+            </el-table-column>
+            <SkuManageDialog
+                v-model="skuDialogVisible"
+                :product-id="skuDialogProductId"
+                @refresh="handleSkuRefresh"
+            />
+          </el-table>
         </el-form-item>
       </el-form>
       <template #footer>

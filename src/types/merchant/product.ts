@@ -31,6 +31,7 @@ export interface MerchantProductDetailVO {
     updateTime: string
     status: number
     deleted: number
+    skuList: MerchantProductSkuVO[]
 }
 
 export interface MerchantProductAddDTO {
@@ -41,6 +42,7 @@ export interface MerchantProductAddDTO {
     mainImage?: string
     detail?: string
     status?: number
+    skuList: ProductSkuItemDTO[]
 }
 
 export interface MerchantProductUpdateDTO {
@@ -50,11 +52,13 @@ export interface MerchantProductUpdateDTO {
     brandId?: number
     mainImage?: string
     detail?: string
+    skuList: ProductSkuItemDTO[]
 }
 
 export interface MerchantProductPageQueryDTO extends PageQuery {
     keyword?: string
     categoryId?: number
+    brandId?: number
     status?: number
     deleted?: number   // 0-正常，1-回收站
 }
@@ -72,4 +76,30 @@ export interface Product{
     deleted?: number
     createTime?: string
     updateTime?: string
+}
+
+
+export interface ProductSkuItemDTO{
+    skuId?: number
+    specs?: string
+    price: number
+    stock: number
+    image?: string
+}
+
+export interface MerchantProductSkuVO {
+    id: number
+    specs: string
+    price: number
+    stock: number
+    image: string
+    status?: number
+    deleted: number
+}
+export interface SkuUpdateDTO {
+    specs?: string
+    price?: number
+    stock?: number
+    image?: string
+    status?: number
 }
