@@ -7,6 +7,10 @@ import LoginView from '@/views/login/index.vue'
 import MerchantOrderView from '@/views/merchantOrder/index.vue'
 import MerchantView from '@/views/merchant/index.vue'
 import IndexView from '@/views/index/index.vue'
+import BrandView from '@/views/brand/index.vue'
+import UserView from '@/views/user/index.vue'
+import AdminOrderView from '@/views/adminOrder/index.vue'
+import ShopView from '@/views/shop/index.vue'
 
 const router = createRouter({
     history:createWebHistory(import.meta.env.BASE_URL),
@@ -22,6 +26,10 @@ const router = createRouter({
                 {path: 'category', name: 'category', component: CategoryView},
                 {path: 'merchant-order',name: 'merchantOrder', component: MerchantOrderView},
                 {path: 'merchant', name: 'merchant', component: MerchantView},
+                {path: 'shop', name: 'shop', component: ShopView},
+                {path: 'brand', name: 'brand', component: BrandView},
+                {path: 'user', name: 'user', component: UserView},
+                {path: 'admin-order', name: 'adminOrder', component: AdminOrderView},
             ]
         },
         {

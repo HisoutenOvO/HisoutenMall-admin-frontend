@@ -33,7 +33,7 @@ const handleLogin = async () => {
       authStore.setRole(res.data.role)
       await authStore.fetchUserInfo()
       ElMessage.success('登录成功')
-      router.push('/product')
+      router.push('/')
     } else {
       ElMessage.error(res.msg)
     }

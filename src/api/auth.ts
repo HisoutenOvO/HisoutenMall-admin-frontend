@@ -18,3 +18,7 @@ export const logoutApi = () =>
 export const getUserInfoApi = () =>
     request.get<Result<UserInfoVO>>("/info")
 
+
+export const updatePasswordApi = (data: { oldPwd: string; newPwd: string }) =>
+    request.put<Result>('/password', data)
+
