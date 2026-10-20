@@ -10,6 +10,7 @@ import {
   updateBrandStatusApi,
   deleteBrandApi
 } from '@/api/admin/brand'
+import ImageUpload from "@/components/ImageUpload.vue";
 
 const searchForm = ref<BrandPageQueryDTO>({
   page: 1,
@@ -214,8 +215,8 @@ onMounted(() => search())
         <el-form-item label="品牌名称" prop="name">
           <el-input v-model="form.name" placeholder="请输入品牌名称" />
         </el-form-item>
-        <el-form-item label="Logo" prop="logo">
-          <el-input v-model="form.logo" placeholder="请输入 Logo 图片 URL" />
+        <el-form-item label="品牌Logo" prop="logo">
+          <ImageUpload v-model="form.logo" width="100px" height="100px" />
         </el-form-item>
         <el-form-item label="排序" prop="sort">
           <el-input v-model.number="form.sort" type="number" />

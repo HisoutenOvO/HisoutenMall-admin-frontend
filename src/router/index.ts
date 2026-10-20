@@ -1,46 +1,55 @@
 import { createRouter, createWebHistory } from "vue-router";
-
 import LayoutView from '@/layout/index.vue'
-import CategoryView from '@/views/category/index.vue'
-import ProductView from '@/views/product/index.vue'
 import LoginView from '@/views/login/index.vue'
-import MerchantOrderView from '@/views/merchantOrder/index.vue'
-import MerchantView from '@/views/merchant/index.vue'
 import IndexView from '@/views/index/index.vue'
+
+// ===== 管理端 =====
+import AdminProductView from '@/views/adminProduct/index.vue'
+import AdminOrderView from '@/views/adminOrder/index.vue'
+import AdminMerchantView from '@/views/adminMerchant/index.vue'
+import CategoryView from '@/views/category/index.vue'
 import BrandView from '@/views/brand/index.vue'
 import UserView from '@/views/user/index.vue'
-import AdminOrderView from '@/views/adminOrder/index.vue'
-import ShopView from '@/views/shop/index.vue'
+
+// ===== 商家端 =====
+import MerchantProductView from '@/views/merchantProduct/index.vue'
+import MerchantOrderView from '@/views/merchantOrder/index.vue'
+import MerchantShopView from '@/views/merchant/index.vue'
 
 const router = createRouter({
-    history:createWebHistory(import.meta.env.BASE_URL),
+    history: createWebHistory(import.meta.env.BASE_URL),
     routes: [
         {
-            path:"/",
-            name:'',
-            component:LayoutView,
+            path: "/",
+            name: 'Layout',
+            component: LayoutView,
             redirect: '/index',
-            children:[
-                {path: 'index', name: 'index', component: IndexView},
-                {path: 'product', name: 'product', component: ProductView},
-                {path: 'category', name: 'category', component: CategoryView},
-                {path: 'merchant-order',name: 'merchantOrder', component: MerchantOrderView},
-                {path: 'merchant', name: 'merchant', component: MerchantView},
-                {path: 'shop', name: 'shop', component: ShopView},
-                {path: 'brand', name: 'brand', component: BrandView},
-                {path: 'user', name: 'user', component: UserView},
-                {path: 'admin-order', name: 'adminOrder', component: AdminOrderView},
+            children: [
+                { path: 'index', name: 'index', component: IndexView },
+
+                // ===== 管理端路由 =====
+                { path: 'admin-product', name: 'adminProduct', component: AdminProductView },
+                { path: 'admin-order', name: 'adminOrder', component: AdminOrderView },
+                { path: 'admin-merchant', name: 'adminMerchant', component: AdminMerchantView },
+                { path: 'category', name: 'category', component: CategoryView },
+                { path: 'brand', name: 'brand', component: BrandView },
+                { path: 'user', name: 'user', component: UserView },
+
+                // ===== 商家端路由 =====
+                { path: 'merchant-product', name: 'merchantProduct', component: MerchantProductView },
+                { path: 'merchant-order', name: 'merchantOrder', component: MerchantOrderView },
+                { path: 'merchant', name: 'merchantShop', component: MerchantShopView },
             ]
         },
         {
-            path:"/login",
-            name:'login',
-            component:LoginView
+            path: "/login",
+            name: 'login',
+            component: LoginView
         }
     ]
 })
 
-// 路由守卫
+// 路由守卫 (保持你原来的逻辑)
 router.beforeEach(async (to, from, next) => {
     const { useAuthStore } = await import('@/stores/auth')
     const authStore = useAuthStore()
@@ -61,4 +70,5 @@ router.beforeEach(async (to, from, next) => {
         next()
     }
 })
+
 export default router

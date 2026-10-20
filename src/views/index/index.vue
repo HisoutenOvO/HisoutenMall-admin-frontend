@@ -157,7 +157,7 @@ onUnmounted(() => {
                 </div>
                 <div class="todo-action">
                   <span class="todo-count">{{ adminData.pendingMerchantAudit }}</span>
-                  <el-button type="primary" size="small" @click="$router.push('/shop')">去处理</el-button>
+                  <el-button type="primary" size="small" @click="$router.push('/adminMerchant')">去处理</el-button>
                 </div>
               </div>
             </div>

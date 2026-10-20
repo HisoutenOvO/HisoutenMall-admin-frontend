@@ -65,19 +65,22 @@ const submitPwd = async () => {
 const menuList = computed(() => {
   const role = authStore.userInfo?.role
   if (role === 3) {
+    // 管理员端菜单
     return [
       { path: '/index', title: '首页', icon: 'HomeFilled' },
       { path: '/category', title: '分类管理', icon: 'Clock' },
       { path: '/brand', title: '品牌管理', icon: 'Star' },
-      { path: '/user', title: '用户管理', icon: 'User' },
-      { path: '/shop', title: '商家管理', icon: 'Shop' },
-      { path: '/admin-order', title: '订单管理', icon: 'Document' }
+      { path: '/admin-product', title: '商品管理', icon: 'Setting' },
+      { path: '/admin-order', title: '订单管理', icon: 'Document' },
+      { path: '/admin-merchant', title: '商家管理', icon: 'Shop' },
+      { path: '/user', title: '用户管理', icon: 'User' }
     ]
   }
   if (role === 2) {
+    // 商家端菜单
     return [
       { path: '/index', title: '首页', icon: 'HomeFilled' },
-      { path: '/product', title: '商品管理', icon: 'Setting' },
+      { path: '/merchant-product', title: '商品管理', icon: 'Setting' },
       { path: '/merchant-order', title: '订单管理', icon: 'Document' },
       { path: '/merchant', title: '店铺信息', icon: 'Shop' }
     ]
@@ -106,7 +109,7 @@ const logout = async () => {
 
 <template>
   <div class="common-layout">
-    <el-container>
+    <el-container class="layout-container">
       <!-- Header 区域 -->
       <el-header class="header">
         <span class="title">HisoutenMall后台管理系统</span>
@@ -139,9 +142,9 @@ const logout = async () => {
         </template>
       </el-dialog>
 
-      <el-container>
+      <el-container class="inner-container">
         <!-- 左侧菜单 -->
-        <el-aside width="200px" class="aside">
+        <el-aside width="200px" class="aside" >
           <el-menu :router="true">
             <el-menu-item v-for="item in menuList" :key="item.path" :index="item.path">
               <el-icon><component :is="item.icon" /></el-icon>
@@ -150,7 +153,7 @@ const logout = async () => {
           </el-menu>
         </el-aside>
 
-        <el-main>
+        <el-main class="main-container">
           <router-view></router-view>
         </el-main>
       </el-container>
@@ -160,8 +163,15 @@ const logout = async () => {
 </template>
 
 <style scoped>
+/* 最外层：占满全屏，纵向排列 */
+.layout-container {
+  height: 100vh;
+  overflow: hidden;
+}
+
 .header {
   background-image: linear-gradient(to right, #00547d, #007fa4, #00aaa0, #00d072, #a8eb12);
+  flex-shrink: 0; /* 保证 header 高度不被压缩 */
 }
 
 .title {
@@ -172,7 +182,7 @@ const logout = async () => {
   font-weight: bolder;
 }
 
-.right_tool{
+.right_tool {
   float: right;
   line-height: 60px;
 }
@@ -182,9 +192,26 @@ a {
   text-decoration: none;
 }
 
+/* 内层容器：占满剩下的高度，横向排列 */
+.inner-container {
+  height: calc(100vh - 60px); /* 减去 Header 的高度 */
+  overflow: hidden;
+}
+
+/* 左侧菜单 */
 .aside {
   width: 220px;
   border-right: 1px solid #ccc;
-  height: 730px;
+  height: 100%;
+  background-color: #fff;
+  overflow-y: auto;
+}
+
+/* 右侧主内容区：独立滚动 */
+.main-content {
+  background-color: #f4f4f4;
+  padding: 20px;
+  height: 100%;
+  overflow-y: auto;
 }
 </style>

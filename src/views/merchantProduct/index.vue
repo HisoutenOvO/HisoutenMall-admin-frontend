@@ -396,11 +396,9 @@ onMounted(() => {
       <el-form-item>
         <el-button type="primary" @click="search">查询</el-button>
         <el-button type="info" @click="clear">清空</el-button>
+        <el-button v-if="activeTab === 'normal'" type="primary" @click="addProduct">+ 新增商品</el-button>
       </el-form-item>
     </el-form>
-
-    <!-- 新增按钮只在"在售"tab显示 -->
-    <el-button v-if="activeTab === 'normal'" type="primary" @click="addProduct">+ 新增商品</el-button>
 
     <!-- 商品表格 -->
     <el-table :data="productList" border style="width: 100%" class="container">
