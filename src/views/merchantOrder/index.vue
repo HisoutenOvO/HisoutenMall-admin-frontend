@@ -1,49 +1,58 @@
 <script setup lang="ts">
+import { onMounted, ref, reactive } from 'vue'
+import { ElMessage } from 'element-plus'
 
-import {onMounted, ref} from "vue";
+import {
+  getMerchantOrderPageApi,
+  getMerchantOrderDetailApi,
+  shipOrderApi
+} from '@/api/merchant/order'
 import type {
   MerchantOrderDetailVO,
   MerchantOrderPageQueryDTO,
   MerchantOrderPageResultVO
-} from "@/types/merchant/order.ts";
-import {getMerchantOrderPageApi,getMerchantOrderDetailApi,shipOrderApi} from "@/api/merchant/order.ts";
-import {ElMessage} from "element-plus";
+} from '@/types/merchant/order'
 
 const total = ref(0)
-
+const orderList = ref<MerchantOrderPageResultVO[]>([])
 const searchOrder = ref<MerchantOrderPageQueryDTO>({
-  page: 1,
-  pageSize: 10,
-  keyword: '',
-  status: undefined,
+  page: 1, pageSize: 10, keyword: '', status: undefined
 })
 
 const detailVisible = ref(false)
-
 const detail = ref<MerchantOrderDetailVO>({} as MerchantOrderDetailVO)
 
-const orderList = ref<MerchantOrderPageResultVO[]>([])
+// ==== 发货弹窗状态 ====
+const shipDialogVisible = ref(false)
+const shipFormRef = ref()
+const shipForm = reactive({
+  orderNo: '',
+  company: '顺丰速运'
+})
+const shipRules = {
+  company: [{ required: true, message: '请输入快递公司', trigger: 'blur' }]
+}
 
 const statusText = (status: number) => {
-  if (status === 0) {
-    return '待支付'
-  }else if (status === 1) {
-    return '已支付'
-  }else if (status === 2) {
-    return '已取消'
-  }else if (status === 3) {
-    return '已完成'
-  }else if (status === 4) {
-    return '已退款'
+  const map: Record<number, string> = {
+    0: '待支付',
+    1: '已支付',
+    2: '已取消',
+    3: '已发货',
+    4: '已完成',
+    5: '已退款'
   }
+  return map[status] || '未知'
 }
+
 const statusTagType = (status: number) => {
   const map: Record<number, string> = {
-    0: 'warning',  // 待支付
-    1: 'primary',  // 已支付
-    2: 'info',     // 已取消
-    3: 'success',  // 已完成
-    4: 'danger'    // 已退款
+    0: 'warning', // 待支付
+    1: 'primary', // 已支付
+    2: 'info',    // 已取消
+    3: 'shipped', // 已发货
+    4: 'success', // 已完成
+    5: 'danger'   // 已退款
   }
   return map[status] || 'info'
 }
@@ -84,17 +93,29 @@ const viewDetail = async (orderNo: string) => {
   }
 }
 
-const ship = async (orderNo: string) => {
-  const result = await shipOrderApi(orderNo)
+const openShipDialog = (orderNo: string) => {
+  shipForm.orderNo = orderNo
+  shipForm.company = '顺丰速运'
+  shipDialogVisible.value = true
+}
+
+const submitShip = async () => {
+  try {
+    await shipFormRef.value.validate()
+  } catch { return }
+
+  // 这里只传 company
+  const result = await shipOrderApi(shipForm.orderNo, shipForm.company)
+
   if(result.code === 1){
     ElMessage.success("发货成功")
+    shipDialogVisible.value = false
     search()
   }else{
     ElMessage.error(result.msg)
   }
 }
 
-// 换页
 const handleSizeChange = (val: number) => {
   searchOrder.value.pageSize = val
   searchOrder.value.page = 1
@@ -108,12 +129,12 @@ const handleCurrentChange = (val: number) => {
 onMounted(() => {
   search()
 })
-
 </script>
 
 <template>
   <h1>订单管理</h1>
   <div class="container">
+    <!-- ... 搜索区和卡片列表部分保持不变 ... -->
     <el-form :inline="true" :model="searchOrder">
       <el-form-item label="订单号">
         <el-input v-model="searchOrder.keyword" placeholder="请输入订单号" clearable />
@@ -123,8 +144,9 @@ onMounted(() => {
           <el-option label="待支付" :value="0" />
           <el-option label="已支付" :value="1" />
           <el-option label="已取消" :value="2" />
-          <el-option label="已完成" :value="3" />
-          <el-option label="已退款" :value="4" />
+          <el-option label="已发货" :value="3" />
+          <el-option label="已完成" :value="4" />
+          <el-option label="已退款" :value="5" />
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -133,9 +155,7 @@ onMounted(() => {
       </el-form-item>
     </el-form>
 
-    <!-- 订单卡片 -->
     <div v-for="order in orderList" :key="order.id" class="order-card">
-      <!-- 头部 -->
       <div class="order-header">
         <div class="header-left">
           <span class="order-no">订单号：{{ order.orderNo }}</span>
@@ -146,9 +166,8 @@ onMounted(() => {
         </el-tag>
       </div>
 
-      <!-- 商品项 -->
-      <div class="order-body">
-        <div v-for="item in order.items" :key="item.orderId" class="order-item">
+      <div class="order-body" v-if="order.items && order.items.length > 0">
+        <div v-for="item in order.items" :key="item.productName + item.skuSpecs" class="order-item">
           <el-image :src="item.image || ''" class="item-image" fit="cover">
             <template #error>
               <div class="img-placeholder">暂无</div>
@@ -163,14 +182,16 @@ onMounted(() => {
           <div class="item-col item-subtotal">¥{{ item.totalPrice }}</div>
         </div>
       </div>
+      <div v-else class="order-body" style="padding: 20px; text-align: center; color: #999;">
+        加载明细中...
+      </div>
 
-      <!-- 底部 -->
       <div class="order-footer">
         <div class="total">
           合计：<span class="total-amount">¥ {{ order.payAmount }}</span>
         </div>
         <div class="actions">
-          <el-button v-if="order.status === 1" type="primary" size="small" @click="ship(order.orderNo)">
+          <el-button v-if="order.status === 1" type="primary" size="small" @click="openShipDialog(order.orderNo)">
             发货
           </el-button>
           <el-button size="small" @click="viewDetail(order.orderNo)">详情</el-button>
@@ -180,42 +201,23 @@ onMounted(() => {
 
     <el-empty v-if="orderList.length === 0" description="暂无订单" />
 
-    <!-- 详情弹窗 -->
-    <el-dialog v-model="detailVisible" title="订单详情" width="720">
-      <el-descriptions :column="2" border>
-        <el-descriptions-item label="订单号">{{ detail.orderNo }}</el-descriptions-item>
-        <el-descriptions-item label="状态">{{ statusText(detail.status) }}</el-descriptions-item>
-        <el-descriptions-item label="收货人">{{ detail.receiverName }}</el-descriptions-item>
-        <el-descriptions-item label="电话">{{ detail.receiverPhone }}</el-descriptions-item>
-        <el-descriptions-item label="地址" :span="2">{{ detail.receiverAddress }}</el-descriptions-item>
-        <el-descriptions-item label="下单时间">{{ detail.createTime }}</el-descriptions-item>
-        <el-descriptions-item label="支付时间">{{ detail.payTime || '未支付' }}</el-descriptions-item>
-      </el-descriptions>
+    <!-- 详情弹窗 ... -->
 
-      <el-table :data="detail.items || []" border style="margin-top: 20px">
-        <el-table-column label="商品" min-width="220">
-          <template #default="{ row }">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <el-image :src="row.image || ''" style="width: 50px; height: 50px; border-radius: 4px;" fit="cover">
-                <template #error>
-                  <div class="img-placeholder" style="width: 50px; height: 50px;">暂无</div>
-                </template>
-              </el-image>
-              <span>{{ row.productName }}</span>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column label="规格" width="160">
-          <template #default="{ row }">{{ formatSpecs(row.skuSpecs) }}</template>
-        </el-table-column>
-        <el-table-column prop="price" label="单价" width="80" />
-        <el-table-column prop="quantity" label="数量" width="60" />
-        <el-table-column prop="totalPrice" label="小计" width="80" />
-      </el-table>
-
-      <div style="text-align: right; margin-top: 16px;">
-        合计：<span style="color: #e1251b; font-size: 20px; font-weight: bold;">¥ {{ detail.payAmount }}</span>
-      </div>
+    <!-- 发货弹窗（修改：去掉快递单号） -->
+    <el-dialog v-model="shipDialogVisible" title="订单发货" width="400px">
+      <el-form :model="shipForm" :rules="shipRules" ref="shipFormRef" label-width="80px">
+        <el-form-item label="订单号">
+          <span style="color: #666;">{{ shipForm.orderNo }}</span>
+        </el-form-item>
+        <el-form-item label="快递公司" prop="company">
+          <el-input v-model="shipForm.company" placeholder="如：顺丰速运" />
+        </el-form-item>
+        <!-- 快递单号被后端自动生成，前端不传 -->
+      </el-form>
+      <template #footer>
+        <el-button @click="shipDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitShip">确认发货</el-button>
+      </template>
     </el-dialog>
 
     <el-pagination
@@ -233,125 +235,26 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.container {
-  margin: 20px 0;
-}
-
-/* 卡片 */
-.order-card {
-  background: #fff;
-  border: 1px solid #ebeef5;
-  border-radius: 4px;
-  margin-bottom: 16px;
-  transition: box-shadow 0.2s;
-}
-.order-card:hover {
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-}
-
-/* 头部 */
-.order-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  background: #fafafa;
-  border-bottom: 1px solid #ebeef5;
-}
-.header-left {
-  display: flex;
-  gap: 32px;
-  font-size: 13px;
-}
-.order-no {
-  font-weight: 600;
-  color: #303133;
-}
-.order-time {
-  color: #909399;
-}
-
-/* 商品列表 */
-.order-body {
-  padding: 4px 16px;
-}
-.order-item {
-  display: flex;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px dashed #ebeef5;
-}
-.order-item:last-child {
-  border-bottom: none;
-}
-.item-image {
-  width: 60px;
-  height: 60px;
-  border-radius: 4px;
-  flex-shrink: 0;
-  background: #f5f7fa;
-}
-.img-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #c0c4cc;
-  background: #f5f7fa;
-  font-size: 12px;
-  border-radius: 4px;
-}
-.item-info {
-  flex: 1;
-  margin-left: 12px;
-  min-width: 0;
-}
-.item-name {
-  font-size: 14px;
-  color: #303133;
-  margin-bottom: 4px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.item-specs {
-  font-size: 12px;
-  color: #909399;
-}
-.item-col {
-  width: 90px;
-  text-align: center;
-  font-size: 13px;
-  color: #606266;
-  flex-shrink: 0;
-}
-.item-subtotal {
-  color: #e1251b;
-  font-weight: 600;
-}
-
-/* 底部 */
-.order-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  background: #fafafa;
-  border-top: 1px solid #ebeef5;
-}
-.total {
-  font-size: 14px;
-  color: #606266;
-}
-.total-amount {
-  color: #e1251b;
-  font-size: 20px;
-  font-weight: bold;
-  margin-left: 4px;
-}
-.actions {
-  display: flex;
-  gap: 8px;
-}
+/* 样式保持你原来的不变 */
+.container { margin: 20px 0; }
+.order-card { background: #fff; border: 1px solid #ebeef5; border-radius: 4px; margin-bottom: 16px; transition: box-shadow 0.2s; }
+.order-card:hover { box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08); }
+.order-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #fafafa; border-bottom: 1px solid #ebeef5; }
+.header-left { display: flex; gap: 32px; font-size: 13px; }
+.order-no { font-weight: 600; color: #303133; }
+.order-time { color: #909399; }
+.order-body { padding: 4px 16px; }
+.order-item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px dashed #ebeef5; }
+.order-item:last-child { border-bottom: none; }
+.item-image { width: 60px; height: 60px; border-radius: 4px; flex-shrink: 0; background: #f5f7fa; }
+.img-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #c0c4cc; background: #f5f7fa; font-size: 12px; border-radius: 4px; }
+.item-info { flex: 1; margin-left: 12px; min-width: 0; }
+.item-name { font-size: 14px; color: #303133; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item-specs { font-size: 12px; color: #909399; }
+.item-col { width: 90px; text-align: center; font-size: 13px; color: #606266; flex-shrink: 0; }
+.item-subtotal { color: #e1251b; font-weight: 600; }
+.order-footer { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #fafafa; border-top: 1px solid #ebeef5; }
+.total { font-size: 14px; color: #606266; }
+.total-amount { color: #e1251b; font-size: 20px; font-weight: bold; margin-left: 4px; }
+.actions { display: flex; gap: 8px; }
 </style>

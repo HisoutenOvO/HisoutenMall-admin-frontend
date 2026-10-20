@@ -15,5 +15,6 @@ export const getMerchantOrderDetailApi = (orderNo: string) =>
     request.get<Result<MerchantOrderDetailVO>>(`/merchant/order/${orderNo}`)
 
 //商家发货接口
-export const shipOrderApi = (orderNo: string) =>
-    request.put<Result>(`/merchant/order/${orderNo}/ship`, orderNo)
+export const shipOrderApi = (orderNo: string, company: string) =>
+    request.put<Result>(`/merchant/order/${orderNo}/ship`, null, { params: { company } })
+

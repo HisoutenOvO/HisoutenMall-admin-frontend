@@ -40,3 +40,8 @@ export interface MerchantOrderDetailVO {
     payTime: string
     items: OrderItemVO[]
 }
+
+export interface ShipDTO {
+    company: string
+    trackingNo: string
+}
