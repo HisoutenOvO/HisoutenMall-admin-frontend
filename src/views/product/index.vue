@@ -3,6 +3,7 @@ import type {
   MerchantProductPageQueryDTO,
   MerchantProductPageResultVO, ProductSkuItemDTO
 } from '@/types/merchant/product'
+import ImageUpload from '@/components/ImageUpload.vue'
 import { nextTick, onMounted, ref } from 'vue'
 import type { FormInstance } from 'element-plus'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -132,9 +133,9 @@ const addProduct = async () => {
     subtitle: '',
     categoryId: undefined,
     brandId: undefined,
-    mainImage: '',
+    mainImage: '', // 确保是空字符串
     detail: '',
-    skuList: []
+    skuList: [{ specs: '', price: 0, stock: 0, image: '' }] // 默认给一条空 SKU
   }
   dialogFormVisible.value = true
   await nextTick()
@@ -147,24 +148,30 @@ const edit = async (productId: number) => {
   const result = await getMerchantProductDetailApi(productId)
   if (result.code === 1) {
     const detail = result.data
+
+    // 处理 skuList，核心是把后端的 id 映射给 skuId
+    const skuList = (detail.skuList || [])
+        .filter((s: any) => s.deleted === 0) // 只保留未删除的
+        .map((s: any) => ({
+          skuId: s.id,    //后端查出来的字段叫 id，前端编辑表单需要叫 skuId
+          specs: s.specs,
+          price: s.price,
+          stock: s.stock,
+          image: s.image
+        }))
+
+    // 一次性完整赋值
     product.value = {
       id: detail.id,
       name: detail.name,
       subtitle: detail.subtitle,
       categoryId: detail.categoryId,
       brandId: detail.brandId,
-      mainImage: detail.mainImage,
+      mainImage: detail.mainImage, // 这里拿到的是干净的 MinIO URL
       detail: detail.detail,
-      skuList: detail.skuList
-          .filter(s => s.deleted === 0)
-          .map(s => ({
-            skuId: s.id,
-            specs: s.specs,
-            price: s.price,
-            stock: s.stock,
-            image: s.image
-          }))
+      skuList: skuList
     }
+
     dialogFormVisible.value = true
     await nextTick()
     productFormRef.value?.clearValidate()
@@ -451,8 +458,8 @@ onMounted(() => {
         <el-form-item label="副标题" label-width="80px" prop="subtitle">
           <el-input v-model="product.subtitle" autocomplete="off" placeholder="请填写商品副标题" />
         </el-form-item>
-        <el-form-item label="商品图片" label-width="80px" prop="mainImage">
-          <el-input v-model="product.mainImage" autocomplete="off" placeholder="请输入商品图片" />
+        <el-form-item label="商品主图" label-width="80px" prop="mainImage">
+          <ImageUpload v-model="product.mainImage" />
         </el-form-item>
         <el-form-item label="商品品牌" label-width="80px" prop="brandId">
           <el-select v-model="product.brandId" placeholder="请选择">
@@ -498,9 +505,9 @@ onMounted(() => {
                 <el-input v-model.number="row.stock" type="number" />
               </template>
             </el-table-column>
-            <el-table-column label="图片" min-width="140">
+            <el-table-column label="图片" width="100" align="center">
               <template #default="{ row }">
-                <el-input v-model="row.image" />
+                <ImageUpload v-model="row.image" width="60px" height="60px" />
               </template>
             </el-table-column>
             <el-table-column label="操作" width="80">
@@ -508,11 +515,6 @@ onMounted(() => {
                 <el-button type="danger" size="small" @click="removeSkuRow($index)">删除</el-button>
               </template>
             </el-table-column>
-            <SkuManageDialog
-                v-model="skuDialogVisible"
-                :product-id="skuDialogProductId"
-                @refresh="handleSkuRefresh"
-            />
           </el-table>
         </el-form-item>
       </el-form>

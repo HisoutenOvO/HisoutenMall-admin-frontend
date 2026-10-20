@@ -2,7 +2,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import ImageUpload from '@/components/ImageUpload.vue'
 import { getMerchantProfileApi, updateMerchantProfileApi } from '@/api/merchant/merchant'
 import type { MerchantProfileUpdateDTO } from '@/types/merchant/merchant'
 
@@ -133,33 +133,8 @@ onMounted(load)
         </el-row>
 
         <!-- 店铺 Logo -->
-        <el-form-item label="店铺Logo">
-          <div class="logo-wrap">
-            <el-upload
-                class="logo-uploader"
-                action="#"
-                :show-file-list="false"
-                :auto-upload="false"
-            >
-              <el-image
-                  v-if="form.shopLogo"
-                  :src="form.shopLogo"
-                  class="logo-img"
-                  fit="cover"
-              >
-                <template #error>
-                  <div class="logo-placeholder"><el-icon><Plus /></el-icon></div>
-                </template>
-              </el-image>
-              <div v-else class="logo-placeholder">
-                <el-icon><Plus /></el-icon>
-              </div>
-            </el-upload>
-            <div class="logo-tip">
-              <div>建议尺寸 200×200</div>
-              <div>阶段三接入 MinIO 后支持上传</div>
-            </div>
-          </div>
+        <el-form-item label="店铺 Logo" label-width="100px">
+          <ImageUpload v-model="form.shopLogo" />
         </el-form-item>
 
         <!-- 店铺简介 -->
