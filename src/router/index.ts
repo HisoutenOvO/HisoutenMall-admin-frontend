@@ -9,7 +9,10 @@ import AdminOrderView from '@/views/adminOrder/index.vue'
 import AdminMerchantView from '@/views/adminMerchant/index.vue'
 import CategoryView from '@/views/category/index.vue'
 import BrandView from '@/views/brand/index.vue'
+import CouponView from '@/views/adminCoupon/index.vue'
 import UserView from '@/views/user/index.vue'
+import ReviewView from '@/views/adminReview/index.vue'
+import SeckillView from '@/views/adminSeckill/index.vue'
 
 // ===== 商家端 =====
 import MerchantProductView from '@/views/merchantProduct/index.vue'
@@ -34,6 +37,9 @@ const router = createRouter({
                 { path: 'category', name: 'category', component: CategoryView },
                 { path: 'brand', name: 'brand', component: BrandView },
                 { path: 'user', name: 'user', component: UserView },
+                { path: 'admin-coupon', name: 'adminCoupon', component: CouponView },
+                { path: 'admin-review', name: 'adminReview', component: ReviewView },
+                { path: 'admin-seckill', name: 'adminSeckill', component: SeckillView },
 
                 // ===== 商家端路由 =====
                 { path: 'merchant-product', name: 'merchantProduct', component: MerchantProductView },

@@ -73,7 +73,10 @@ const menuList = computed(() => {
       { path: '/admin-product', title: '商品管理', icon: 'Setting' },
       { path: '/admin-order', title: '订单管理', icon: 'Document' },
       { path: '/admin-merchant', title: '商家管理', icon: 'Shop' },
-      { path: '/user', title: '用户管理', icon: 'User' }
+      { path: '/user', title: '用户管理', icon: 'User' },
+      { path: '/admin-coupon', title: '优惠券管理', icon: 'Ticket' },
+      { path: '/admin-review', title: '评论管理', icon: 'ChatDotSquare' },
+      { path: '/admin-seckill', title: '秒杀管理', icon: 'Timer' }
     ]
   }
   if (role === 2) {
