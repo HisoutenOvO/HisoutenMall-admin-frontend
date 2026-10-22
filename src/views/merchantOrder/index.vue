@@ -201,9 +201,45 @@ onMounted(() => {
 
     <el-empty v-if="orderList.length === 0" description="暂无订单" />
 
-    <!-- 详情弹窗 ... -->
+    <!-- 详情弹窗 -->
+    <el-dialog v-model="detailVisible" title="订单详情" width="720">
+      <el-descriptions :column="2" border>
+        <el-descriptions-item label="订单号">{{ detail.orderNo }}</el-descriptions-item>
+        <el-descriptions-item label="状态">{{ statusText(detail.status) }}</el-descriptions-item>
+        <el-descriptions-item label="收货人">{{ detail.receiverName }}</el-descriptions-item>
+        <el-descriptions-item label="电话">{{ detail.receiverPhone }}</el-descriptions-item>
+        <el-descriptions-item label="地址" :span="2">{{ detail.receiverAddress }}</el-descriptions-item>
+        <el-descriptions-item label="下单时间">{{ detail.createTime }}</el-descriptions-item>
+        <el-descriptions-item label="支付时间">{{ detail.payTime || '未支付' }}</el-descriptions-item>
+      </el-descriptions>
 
-    <!-- 发货弹窗（修改：去掉快递单号） -->
+      <el-table :data="detail.items || []" border style="margin-top: 20px">
+        <el-table-column label="商品" min-width="220">
+          <template #default="{ row }">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <el-image :src="row.image || ''" style="width: 50px; height: 50px; border-radius: 4px;" fit="cover">
+                <template #error>
+                  <div class="img-placeholder" style="width: 50px; height: 50px;">暂无</div>
+                </template>
+              </el-image>
+              <span>{{ row.productName }}</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="规格" width="160">
+          <template #default="{ row }">{{ formatSpecs(row.skuSpecs) }}</template>
+        </el-table-column>
+        <el-table-column prop="price" label="单价" width="80" />
+        <el-table-column prop="quantity" label="数量" width="60" />
+        <el-table-column prop="totalPrice" label="小计" width="80" />
+      </el-table>
+
+      <div style="text-align: right; margin-top: 16px;">
+        合计：<span style="color: #e1251b; font-size: 20px; font-weight: bold;">¥ {{ detail.payAmount }}</span>
+      </div>
+    </el-dialog>
+
+    <!-- 发货弹窗 -->
     <el-dialog v-model="shipDialogVisible" title="订单发货" width="400px">
       <el-form :model="shipForm" :rules="shipRules" ref="shipFormRef" label-width="80px">
         <el-form-item label="订单号">

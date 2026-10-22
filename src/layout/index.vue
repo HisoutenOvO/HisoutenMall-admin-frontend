@@ -83,9 +83,10 @@ const menuList = computed(() => {
     // 商家端菜单
     return [
       { path: '/index', title: '首页', icon: 'HomeFilled' },
+      { path: '/merchant', title: '店铺信息', icon: 'Shop' },
       { path: '/merchant-product', title: '商品管理', icon: 'Setting' },
       { path: '/merchant-order', title: '订单管理', icon: 'Document' },
-      { path: '/merchant', title: '店铺信息', icon: 'Shop' }
+      { path: '/merchant-coupon', title: '优惠券管理', icon: 'Ticket' }
     ]
   }
   return []
