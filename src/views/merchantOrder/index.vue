@@ -1,17 +1,9 @@
 <script setup lang="ts">
 import { onMounted, ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
-
-import {
-  getMerchantOrderPageApi,
-  getMerchantOrderDetailApi,
-  shipOrderApi
-} from '@/api/merchant/order'
-import type {
-  MerchantOrderDetailVO,
-  MerchantOrderPageQueryDTO,
-  MerchantOrderPageResultVO
-} from '@/types/merchant/order'
+import { getMerchantOrderPageApi, getMerchantOrderDetailApi, shipOrderApi } from '@/api/merchant/order'
+import type { MerchantOrderDetailVO, MerchantOrderPageQueryDTO, MerchantOrderPageResultVO } from '@/types/merchant/order'
+import { formatSpecs } from '@/utils/format' // 引入公共方法
 
 const total = ref(0)
 const orderList = ref<MerchantOrderPageResultVO[]>([])
@@ -22,49 +14,18 @@ const searchOrder = ref<MerchantOrderPageQueryDTO>({
 const detailVisible = ref(false)
 const detail = ref<MerchantOrderDetailVO>({} as MerchantOrderDetailVO)
 
-// ==== 发货弹窗状态 ====
 const shipDialogVisible = ref(false)
 const shipFormRef = ref()
-const shipForm = reactive({
-  orderNo: '',
-  company: '顺丰速运'
-})
-const shipRules = {
-  company: [{ required: true, message: '请输入快递公司', trigger: 'blur' }]
-}
+const shipForm = reactive({ orderNo: '', company: '顺丰速运' })
+const shipRules = { company: [{ required: true, message: '请输入快递公司', trigger: 'blur' }] }
 
 const statusText = (status: number) => {
-  const map: Record<number, string> = {
-    0: '待支付',
-    1: '已支付',
-    2: '已取消',
-    3: '已发货',
-    4: '已完成',
-    5: '已退款'
-  }
+  const map: Record<number, string> = { 0: '待支付', 1: '已支付', 2: '已取消', 3: '已发货', 4: '已完成', 5: '已退款' }
   return map[status] || '未知'
 }
-
 const statusTagType = (status: number) => {
-  const map: Record<number, string> = {
-    0: 'warning', // 待支付
-    1: 'primary', // 已支付
-    2: 'info',    // 已取消
-    3: 'shipped', // 已发货
-    4: 'success', // 已完成
-    5: 'danger'   // 已退款
-  }
+  const map: Record<number, string> = { 0: 'warning', 1: 'primary', 2: 'info', 3: 'shipped', 4: 'success', 5: 'danger' }
   return map[status] || 'info'
-}
-
-const formatSpecs = (specs: string) => {
-  if (!specs) return '默认规格'
-  try {
-    const obj = JSON.parse(specs)
-    return Object.values(obj).join(' / ')
-  } catch {
-    return specs
-  }
 }
 
 const search = async () => {
@@ -80,7 +41,7 @@ const search = async () => {
 const clear = () => {
   searchOrder.value.keyword = ''
   searchOrder.value.status = undefined
-  search()
+  void search()
 }
 
 const viewDetail = async (orderNo: string) => {
@@ -103,14 +64,11 @@ const submitShip = async () => {
   try {
     await shipFormRef.value.validate()
   } catch { return }
-
-  // 这里只传 company
   const result = await shipOrderApi(shipForm.orderNo, shipForm.company)
-
   if(result.code === 1){
     ElMessage.success("发货成功")
     shipDialogVisible.value = false
-    search()
+    await search()
   }else{
     ElMessage.error(result.msg)
   }
@@ -119,22 +77,21 @@ const submitShip = async () => {
 const handleSizeChange = (val: number) => {
   searchOrder.value.pageSize = val
   searchOrder.value.page = 1
-  search()
+  void search()
 }
 const handleCurrentChange = (val: number) => {
   searchOrder.value.page = val
-  search()
+  void search()
 }
 
 onMounted(() => {
-  search()
+  void search()
 })
 </script>
 
 <template>
   <h1>订单管理</h1>
   <div class="container">
-    <!-- ... 搜索区和卡片列表部分保持不变 ... -->
     <el-form :inline="true" :model="searchOrder">
       <el-form-item label="订单号">
         <el-input v-model="searchOrder.keyword" placeholder="请输入订单号" clearable />
@@ -175,7 +132,7 @@ onMounted(() => {
           </el-image>
           <div class="item-info">
             <div class="item-name">{{ item.productName }}</div>
-            <div class="item-specs">{{ formatSpecs(item.skuSpecs) }}</div>
+            <div class="item-specs">{{ formatSpecs(item.skuSpecs) }}</div> <!-- 替换 -->
           </div>
           <div class="item-col item-price">¥{{ item.price }}</div>
           <div class="item-col item-quantity">× {{ item.quantity }}</div>
@@ -226,7 +183,7 @@ onMounted(() => {
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="规格" width="160">
+        <el-table-column label="规格" width="160"> <!-- 替换 -->
           <template #default="{ row }">{{ formatSpecs(row.skuSpecs) }}</template>
         </el-table-column>
         <el-table-column prop="price" label="单价" width="80" />
@@ -248,7 +205,6 @@ onMounted(() => {
         <el-form-item label="快递公司" prop="company">
           <el-input v-model="shipForm.company" placeholder="如：顺丰速运" />
         </el-form-item>
-        <!-- 快递单号被后端自动生成，前端不传 -->
       </el-form>
       <template #footer>
         <el-button @click="shipDialogVisible = false">取消</el-button>
@@ -271,7 +227,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* 样式保持你原来的不变 */
 .container { margin: 20px 0; }
 .order-card { background: #fff; border: 1px solid #ebeef5; border-radius: 4px; margin-bottom: 16px; transition: box-shadow 0.2s; }
 .order-card:hover { box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08); }

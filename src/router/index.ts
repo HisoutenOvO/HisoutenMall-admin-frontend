@@ -19,6 +19,7 @@ import MerchantProductView from '@/views/merchantProduct/index.vue'
 import MerchantOrderView from '@/views/merchantOrder/index.vue'
 import MerchantShopView from '@/views/merchant/index.vue'
 import MerchantCouponView from '@/views/merchantCoupon/index.vue'
+import MerchantSeckillView from '@/views/merchantSeckill/index.vue'
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -46,7 +47,8 @@ const router = createRouter({
                 { path: 'merchant-product', name: 'merchantProduct', component: MerchantProductView },
                 { path: 'merchant-order', name: 'merchantOrder', component: MerchantOrderView },
                 { path: 'merchant', name: 'merchantShop', component: MerchantShopView },
-                { path: 'merchant-coupon', name: 'merchantCoupon', component: MerchantCouponView}
+                { path: 'merchant-coupon', name: 'merchantCoupon', component: MerchantCouponView},
+                { path: 'merchant-seckill', name: 'merchantSeckill', component: MerchantSeckillView}
             ]
         },
         {

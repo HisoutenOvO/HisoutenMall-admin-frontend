@@ -1,27 +1,19 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import {
-  getAdminOrderPageApi,
-} from '@/api/admin/order'
-
-import type {AdminOrderPageQueryDTO, AdminOrderPageResultVO} from '@/types/admin/order'
+import { ElMessage } from 'element-plus'
+import { getAdminOrderPageApi, getAdminOrderDetailApi } from '@/api/admin/order'
+import type { AdminOrderPageQueryDTO, AdminOrderPageResultVO, AdminOrderDetailVO } from '@/types/admin/order'
+import { formatSpecs } from '@/utils/format' // 引入公共方法
 
 const searchForm = ref<AdminOrderPageQueryDTO>({
-  page: 1,
-  pageSize: 10,
-  orderNo: '',
-  merchantName: '',
-  buyerName: '',
-  status: undefined
+  page: 1, pageSize: 10, orderNo: '', merchantName: '', buyerUsername: '', status: undefined
 })
-
 const list = ref<AdminOrderPageResultVO[]>([])
 const total = ref(0)
 const loading = ref(false)
 
-// 详情弹窗
 const dialogVisible = ref(false)
-const currentOrder = ref<AdminOrderPageResultVO | null>(null)
+const currentOrder = ref<AdminOrderDetailVO | null>(null)
 
 const loadData = async () => {
   loading.value = true
@@ -34,9 +26,14 @@ const loadData = async () => {
   } finally { loading.value = false }
 }
 
-const openDetail = (row: AdminOrderPageResultVO) => {
-  currentOrder.value = row
-  dialogVisible.value = true
+const openDetail = async (row: AdminOrderPageResultVO) => {
+  const res = await getAdminOrderDetailApi(row.orderNo)
+  if (res.code === 1) {
+    currentOrder.value = res.data
+    dialogVisible.value = true
+  } else {
+    ElMessage.error(res.msg)
+  }
 }
 
 const formatStatus = (status: number) => {
@@ -49,23 +46,13 @@ const getStatusType = (status: number) => {
   return map[status] || 'info'
 }
 
-// 解析 SKU 规格 JSON 字符串，比如 {"颜色":"黑色"} 变成 "颜色: 黑色"
-const formatSpecs = (specs: string) => {
-  if (!specs) return '默认'
-  try {
-    const obj = JSON.parse(specs)
-    return Object.entries(obj).map(([k, v]) => `${k}: ${v}`).join(' / ')
-  } catch {
-    return specs
-  }
-}
-
-onMounted(loadData)
+onMounted(() => {
+  void loadData()
+})
 </script>
 
 <template>
   <div class="container">
-    <!-- 搜索区 -->
     <el-form :inline="true" :model="searchForm" class="search-form">
       <el-form-item label="订单号">
         <el-input v-model="searchForm.orderNo" placeholder="精确查询订单号" clearable />
@@ -73,8 +60,8 @@ onMounted(loadData)
       <el-form-item label="商家">
         <el-input v-model="searchForm.merchantName" placeholder="按商家搜索" clearable />
       </el-form-item>
-      <el-form-item label="买家">
-        <el-input v-model="searchForm.buyerName" placeholder="按买家搜索" clearable />
+      <el-form-item label="买家账号">
+        <el-input v-model="searchForm.buyerUsername" placeholder="按买家账号搜索" clearable />
       </el-form-item>
       <el-form-item label="状态">
         <el-select v-model="searchForm.status" placeholder="全部" clearable style="width: 120px">
@@ -86,15 +73,14 @@ onMounted(loadData)
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="searchForm.page=1; loadData()">查询</el-button>
-        <el-button @click="searchForm.orderNo=''; searchForm.merchantName=''; searchForm.buyerName=''; searchForm.status=undefined; loadData()">重置</el-button>
+        <el-button @click="searchForm.orderNo=''; searchForm.merchantName=''; searchForm.buyerUsername=''; searchForm.status=undefined; loadData()">重置</el-button>
       </el-form-item>
     </el-form>
 
-    <!-- 表格 -->
     <el-table :data="list" v-loading="loading" border stripe>
       <el-table-column prop="orderNo" label="订单号" width="200" />
       <el-table-column prop="merchantName" label="商家名称" min-width="150" />
-      <el-table-column prop="buyerName" label="买家" width="120" />
+      <el-table-column prop="buyerUsername" label="买家" width="120" />
       <el-table-column prop="payAmount" label="实付金额" width="120">
         <template #default="{ row }">
           <span style="color: #e1251b; font-weight: bold;">￥{{ row.payAmount }}</span>
@@ -119,7 +105,6 @@ onMounted(loadData)
       </el-table-column>
     </el-table>
 
-    <!-- 分页 -->
     <div class="pagination-container">
       <el-pagination
           v-model:current-page="searchForm.page"
@@ -132,7 +117,6 @@ onMounted(loadData)
       />
     </div>
 
-    <!-- 订单详情弹窗 -->
     <el-dialog v-model="dialogVisible" title="订单详情" width="800px">
       <div v-if="currentOrder">
         <el-descriptions :column="2" border>
@@ -140,7 +124,7 @@ onMounted(loadData)
           <el-descriptions-item label="状态">
             <el-tag :type="getStatusType(currentOrder.status)">{{ formatStatus(currentOrder.status) }}</el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="买家">{{ currentOrder.buyerName }}</el-descriptions-item>
+          <el-descriptions-item label="买家">{{ currentOrder.buyerUsername }}</el-descriptions-item>
           <el-descriptions-item label="商家">{{ currentOrder.merchantName }}</el-descriptions-item>
           <el-descriptions-item label="下单时间">{{ currentOrder.createTime }}</el-descriptions-item>
           <el-descriptions-item label="支付时间">{{ currentOrder.payTime || '未支付' }}</el-descriptions-item>
@@ -161,10 +145,8 @@ onMounted(loadData)
               </div>
             </template>
           </el-table-column>
-          <el-table-column label="规格" width="200">
-            <template #default="{ row }">
-              {{ formatSpecs(row.skuSpecs) }}
-            </template>
+          <el-table-column label="规格" width="200"> <!-- 替换 -->
+            <template #default="{ row }">{{ formatSpecs(row.skuSpecs) }}</template>
           </el-table-column>
           <el-table-column prop="price" label="单价" width="100">
             <template #default="{ row }">￥{{ row.price }}</template>
@@ -183,21 +165,7 @@ onMounted(loadData)
 </template>
 
 <style scoped>
-.container {
-  padding: 20px;
-  background-color: #fff;
-  min-height: calc(100vh - 60px);
-}
-.search-form {
-  margin-bottom: 20px;
-  padding: 15px 15px 0;
-  background-color: #f8f9fa;
-  border-radius: 6px;
-}
-.pagination-container {
-  margin-top: 20px;
-  display: flex;
-  justify-content: flex-end;
-  padding-bottom: 20px;
-}
+.container { padding: 20px; background-color: #fff; min-height: calc(100vh - 60px); }
+.search-form { margin-bottom: 20px; padding: 15px 15px 0; background-color: #f8f9fa; border-radius: 6px; }
+.pagination-container { margin-top: 20px; display: flex; justify-content: flex-end; padding-bottom: 20px; }
 </style>

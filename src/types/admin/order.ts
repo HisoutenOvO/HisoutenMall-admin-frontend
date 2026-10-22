@@ -3,7 +3,7 @@ import type { PageQuery } from '@/types/common'
 export interface AdminOrderPageQueryDTO extends PageQuery {
     orderNo?: string
     merchantName?: string
-    buyerUsername?: string
+    buyerUsername?: string // 注意这里是 buyerUsername
     status?: number
 }
 
@@ -16,43 +16,28 @@ export interface OrderItemVO {
     image: string
 }
 
-export interface OrderCouponVO {
-    couponName: string
-    type: number
-    value: number
-}
-
-export interface LogisticsVO {
-    company: string
-    trackingNo: string
-    status: number
-    shipTime: string
-}
-
 export interface AdminOrderPageResultVO {
     id: number
     orderNo: string
     merchantName: string
-    buyerUsername: string
+    buyerUsername: string // 这里也是 buyerUsername
     payAmount: number
     status: number
+    source: number
     createTime: string
 }
 
+// 详情专属 VO
 export interface AdminOrderDetailVO {
     orderNo: string
-    merchantName: string
-    buyerUsername: string
     status: number
-    totalAmount: number
-    payAmount: number
-    discountAmount: number
+    buyerUsername: string
+    merchantName: string
+    createTime: string
+    payTime: string | null
     receiverName: string
     receiverPhone: string
     receiverAddress: string
-    createTime: string
-    payTime: string | null
+    payAmount: number
     items: OrderItemVO[]
-    couponInfo: OrderCouponVO | null
-    logistics: LogisticsVO | null
 }

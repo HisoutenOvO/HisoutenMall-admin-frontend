@@ -86,7 +86,8 @@ const menuList = computed(() => {
       { path: '/merchant', title: '店铺信息', icon: 'Shop' },
       { path: '/merchant-product', title: '商品管理', icon: 'Setting' },
       { path: '/merchant-order', title: '订单管理', icon: 'Document' },
-      { path: '/merchant-coupon', title: '优惠券管理', icon: 'Ticket' }
+      { path: '/merchant-coupon', title: '优惠券管理', icon: 'Ticket' },
+      { path: '/merchant-seckill', title: '秒杀活动管理', icon: 'Timer'}
     ]
   }
   return []

@@ -1,17 +1,9 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import {
-  getAdminProductPageApi,
-  getAdminProductDetailApi,
-  offlineProductApi
-} from '@/api/admin/product'
-import type {
-  AdminProductPageQueryDTO,
-  AdminProductPageResultVO,
-  AdminProductDetailVO
-} from '@/types/admin/product'
-
+import { getAdminProductPageApi, getAdminProductDetailApi, offlineProductApi } from '@/api/admin/product'
+import type { AdminProductPageQueryDTO, AdminProductPageResultVO, AdminProductDetailVO } from '@/types/admin/product'
+import { formatSpecs } from '@/utils/format' // 引入公共方法
 
 const searchForm = ref<AdminProductPageQueryDTO>({
   page: 1, pageSize: 10, keyword: '', merchantName: '', status: undefined, deleted: 0
@@ -20,7 +12,6 @@ const list = ref<AdminProductPageResultVO[]>([])
 const total = ref(0)
 const loading = ref(false)
 
-// 详情抽屉
 const drawerVisible = ref(false)
 const currentDetail = ref<AdminProductDetailVO | null>(null)
 
@@ -57,18 +48,19 @@ const handleOffline = async (row: AdminProductPageResultVO) => {
   const res = await offlineProductApi(row.id)
   if (res.code === 1) {
     ElMessage.success('已强制下架')
-    loadData()
+    await loadData()
   } else {
     ElMessage.error(res.msg)
   }
 }
 
-onMounted(loadData)
+onMounted(() => {
+  void loadData()
+})
 </script>
 
 <template>
   <div class="container">
-    <!-- 搜索区 -->
     <el-form :inline="true" :model="searchForm" class="search-form">
       <el-form-item label="商品名称">
         <el-input v-model="searchForm.keyword" placeholder="搜索商品" clearable />
@@ -88,7 +80,6 @@ onMounted(loadData)
       </el-form-item>
     </el-form>
 
-    <!-- 表格区 -->
     <el-table :data="list" v-loading="loading" border stripe>
       <el-table-column label="主图" width="80" align="center">
         <template #default="{ row }">
@@ -117,7 +108,6 @@ onMounted(loadData)
       </el-table-column>
     </el-table>
 
-    <!-- 分页 -->
     <div class="pagination-container">
       <el-pagination
           v-model:current-page="searchForm.page"
@@ -130,7 +120,6 @@ onMounted(loadData)
       />
     </div>
 
-    <!-- 详情抽屉 -->
     <el-drawer v-model="drawerVisible" title="商品详情" size="50%">
       <div v-if="currentDetail">
         <el-descriptions :column="2" border>
@@ -163,7 +152,9 @@ onMounted(loadData)
               <el-image :src="row.image" style="width: 40px; height: 40px" />
             </template>
           </el-table-column>
-          <el-table-column prop="specs" label="规格" />
+          <el-table-column label="规格"> <!-- 替换 -->
+            <template #default="{ row }">{{ formatSpecs(row.specs) }}</template>
+          </el-table-column>
           <el-table-column prop="price" label="价格">
             <template #default="{ row }">￥{{ row.price }}</template>
           </el-table-column>
@@ -182,21 +173,7 @@ onMounted(loadData)
 </template>
 
 <style scoped>
-.container {
-  padding: 20px;
-  background-color: #fff;
-  min-height: calc(100vh - 60px);
-}
-.search-form {
-  margin-bottom: 20px;
-  padding: 15px 15px 0;
-  background-color: #f8f9fa;
-  border-radius: 6px;
-}
-.pagination-container {
-  margin-top: 20px;
-  display: flex;
-  justify-content: flex-end;
-  padding-bottom: 20px;
-}
+.container { padding: 20px; background-color: #fff; min-height: calc(100vh - 60px); }
+.search-form { margin-bottom: 20px; padding: 15px 15px 0; background-color: #f8f9fa; border-radius: 6px; }
+.pagination-container { margin-top: 20px; display: flex; justify-content: flex-end; padding-bottom: 20px; }
 </style>

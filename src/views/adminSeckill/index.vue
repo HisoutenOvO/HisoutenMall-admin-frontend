@@ -1,18 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-
-// 严格分开导入 API
-import {
-  getAdminSeckillPageApi,
-  getAdminSeckillDetailApi
-} from '@/api/admin/seckill'
-
-// 严格分开导入 Types
-import type {
-  AdminSeckillPageQueryDTO,
-  AdminSeckillPageResultVO,
-  AdminSeckillDetailVO
-} from '@/types/admin/seckill'
+import { getAdminSeckillPageApi, getAdminSeckillDetailApi } from '@/api/admin/seckill'
+import type { AdminSeckillPageQueryDTO, AdminSeckillPageResultVO, AdminSeckillDetailVO } from '@/types/admin/seckill'
+import { formatSpecs } from '@/utils/format' // <-- 引入公共方法
 
 const searchForm = ref<AdminSeckillPageQueryDTO>({
   page: 1, pageSize: 10, keyword: '', merchantName: '', status: undefined
@@ -21,7 +11,6 @@ const list = ref<AdminSeckillPageResultVO[]>([])
 const total = ref(0)
 const loading = ref(false)
 
-// 详情弹窗状态
 const detailVisible = ref(false)
 const currentDetail = ref<AdminSeckillDetailVO | null>(null)
 const detailLoading = ref(false)
@@ -62,7 +51,6 @@ onMounted(loadData)
 
 <template>
   <div class="container">
-    <!-- 搜索区 -->
     <el-form :inline="true" :model="searchForm" class="search-form">
       <el-form-item label="活动名称">
         <el-input v-model="searchForm.keyword" placeholder="按活动名搜索" clearable />
@@ -83,7 +71,6 @@ onMounted(loadData)
       </el-form-item>
     </el-form>
 
-    <!-- 列表区（绝对极简） -->
     <el-table :data="list" v-loading="loading" border stripe>
       <el-table-column prop="name" label="活动名称" min-width="180" show-overflow-tooltip />
       <el-table-column prop="merchantName" label="所属商家" width="180" show-overflow-tooltip />
@@ -106,7 +93,6 @@ onMounted(loadData)
       </el-table-column>
     </el-table>
 
-    <!-- 分页 -->
     <div class="pagination-container">
       <el-pagination
           v-model:current-page="searchForm.page"
@@ -119,7 +105,6 @@ onMounted(loadData)
       />
     </div>
 
-    <!-- 详情弹窗（严格对应你截图的 JSON 数据） -->
     <el-dialog v-model="detailVisible" title="秒杀活动详情" width="850px">
       <div v-loading="detailLoading">
         <template v-if="currentDetail">
@@ -138,7 +123,9 @@ onMounted(loadData)
           <h3 style="margin: 20px 0 10px 0; font-size: 16px;">包含的秒杀商品</h3>
           <el-table :data="currentDetail.products" border size="small">
             <el-table-column label="商品名称" prop="productName" min-width="150" show-overflow-tooltip />
-            <el-table-column label="规格" prop="skuSpecs" width="150" show-overflow-tooltip />
+            <el-table-column label="规格" width="150" show-overflow-tooltip> <!-- <-- 替换在这里 -->
+              <template #default="{ row }">{{ formatSpecs(row.skuSpecs) }}</template>
+            </el-table-column>
             <el-table-column label="价格" width="160">
               <template #default="{ row }">
                 <div style="color: #e1251b; font-weight: bold;">秒杀: ￥{{ row.seckillPrice }}</div>

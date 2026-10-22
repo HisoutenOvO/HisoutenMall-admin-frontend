@@ -1,20 +1,9 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-
-// 严格分开导入 API
-import {
-  getAdminReviewPageApi,
-  getAdminReviewDetailApi,
-  deleteAdminReviewApi
-} from '@/api/admin/review'
-
-// 严格分开导入 Types
-import type {
-  AdminReviewPageQueryDTO,
-  AdminReviewPageResultVO,
-  AdminReviewDetailVO
-} from '@/types/admin/review'
+import { getAdminReviewPageApi, getAdminReviewDetailApi, deleteAdminReviewApi } from '@/api/admin/review'
+import type { AdminReviewPageQueryDTO, AdminReviewPageResultVO, AdminReviewDetailVO } from '@/types/admin/review'
+import { formatSpecs } from '@/utils/format' // 引入公共方法
 
 const searchForm = ref<AdminReviewPageQueryDTO>({
   page: 1, pageSize: 10, merchantName: '', rating: undefined
@@ -23,7 +12,6 @@ const list = ref<AdminReviewPageResultVO[]>([])
 const total = ref(0)
 const loading = ref(false)
 
-// 详情弹窗状态
 const detailVisible = ref(false)
 const currentDetail = ref<AdminReviewDetailVO | null>(null)
 
@@ -58,18 +46,19 @@ const handleDelete = async (row: AdminReviewPageResultVO) => {
   const res = await deleteAdminReviewApi(row.id)
   if (res.code === 1) {
     ElMessage.success('评价已删除')
-    loadData()
+    await loadData()
   } else {
     ElMessage.error(res.msg)
   }
 }
 
-onMounted(loadData)
+onMounted(() => {
+  void loadData()
+})
 </script>
 
 <template>
   <div class="container">
-    <!-- 搜索区 -->
     <el-form :inline="true" :model="searchForm" class="search-form">
       <el-form-item label="商家名称">
         <el-input v-model="searchForm.merchantName" placeholder="按商家搜索" clearable />
@@ -89,7 +78,6 @@ onMounted(loadData)
       </el-form-item>
     </el-form>
 
-    <!-- 列表区（绝对精简） -->
     <el-table :data="list" v-loading="loading" border stripe>
       <el-table-column label="买家" width="150" align="center">
         <template #default="{ row }">
@@ -115,7 +103,6 @@ onMounted(loadData)
       </el-table-column>
     </el-table>
 
-    <!-- 分页 -->
     <div class="pagination-container">
       <el-pagination
           v-model:current-page="searchForm.page"
@@ -128,15 +115,13 @@ onMounted(loadData)
       />
     </div>
 
-    <!-- 评价详情弹窗（大而全） -->
     <el-dialog v-model="detailVisible" title="评价完整详情" width="650px">
       <div v-if="currentDetail">
         <el-descriptions :column="2" border>
           <el-descriptions-item label="所属商家">{{ currentDetail.merchantName }}</el-descriptions-item>
           <el-descriptions-item label="关联订单">{{ currentDetail.orderNo }}</el-descriptions-item>
           <el-descriptions-item label="商品名称">{{ currentDetail.productName }}</el-descriptions-item>
-          <el-descriptions-item label="商品规格">{{ currentDetail.skuSpecs || '默认规格' }}</el-descriptions-item>
-
+          <el-descriptions-item label="商品规格">{{ formatSpecs(currentDetail.skuSpecs) }}</el-descriptions-item> <!-- 替换 -->
           <el-descriptions-item label="买家信息">
             <div style="display: flex; align-items: center; gap: 5px;">
               <el-avatar :src="currentDetail.avatar" size="small">{{ currentDetail.nickname?.charAt(0) }}</el-avatar>
@@ -144,15 +129,12 @@ onMounted(loadData)
             </div>
           </el-descriptions-item>
           <el-descriptions-item label="评价时间">{{ currentDetail.createTime }}</el-descriptions-item>
-
           <el-descriptions-item label="评分" :span="2">
             <el-rate v-model="currentDetail.rating" disabled show-score text-color="#ff9900" />
           </el-descriptions-item>
-
           <el-descriptions-item label="评价内容" :span="2">
             <div style="line-height: 1.6; white-space: pre-wrap;">{{ currentDetail.content || '此用户未填写评价内容' }}</div>
           </el-descriptions-item>
-
           <el-descriptions-item label="评价图片" :span="2" v-if="currentDetail.images && currentDetail.images.length > 0">
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
               <el-image
