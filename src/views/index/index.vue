@@ -24,7 +24,6 @@ const initChart = (trendData: { date: string; amount: number }[]) => {
     const amounts = trendData.map(item => item.amount)
 
     const option = {
-      // 用暗色背景的高级渐变，或者去掉背景
       tooltip: {
         trigger: 'axis',
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -35,20 +34,20 @@ const initChart = (trendData: { date: string; amount: number }[]) => {
         formatter: '{b}<br/>销售额: <span style="color:#c23531;font-weight:bold;">￥{c}</span>',
         extraCssText: 'box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 8px;'
       },
-      grid: { left: '2%', right: '3%', bottom: '5%', top: '10%', containLabel: true },
+      grid: { left: '1%', right: '2%', bottom: '3%', top: '8%', containLabel: true },
       xAxis: {
         type: 'category',
         boundaryGap: false,
         data: dates.length ? dates : ['暂无数据'],
-        axisLine: { lineStyle: { color: '#e0e0e0' } },
-        axisTick: { show: false }, // 去掉小刻度，显得干净
-        axisLabel: { color: '#888', margin: 15 }
+        axisLine: { lineStyle: { color: '#e2e8f0' } },
+        axisTick: { show: false },
+        axisLabel: { color: '#64748b', margin: 15 }
       },
       yAxis: {
         type: 'value',
-        axisLabel: { formatter: '￥{value}', color: '#888' },
-        splitLine: { lineStyle: { type: 'dashed', color: '#f0f0f0' } },
-        axisLine: { show: false }, // 去掉 Y 轴实线
+        axisLabel: { formatter: '￥{value}', color: '#64748b' },
+        splitLine: { lineStyle: { type: 'dashed', color: '#f1f5f9' } },
+        axisLine: { show: false },
         axisTick: { show: false }
       },
       series: [
@@ -57,7 +56,7 @@ const initChart = (trendData: { date: string; amount: number }[]) => {
           type: 'line',
           smooth: true,
           symbol: 'circle',
-          symbolSize: 6,
+          symbolSize: 8,
           itemStyle: { color: '#c23531', borderWidth: 2, borderColor: '#fff' },
           lineStyle: { width: 3, color: '#c23531' },
           areaStyle: {
@@ -105,8 +104,6 @@ onUnmounted(() => {
 
 <template>
   <div class="dashboard-container">
-    <div class="header-title">数据概览</div>
-
     <!-- 管理员大屏 -->
     <template v-if="role === 3 && adminData">
       <el-row :gutter="20" class="top-row">
@@ -132,7 +129,7 @@ onUnmounted(() => {
           </div>
         </el-col>
         <el-col :span="6">
-          <div class="data-card card-orange">
+          <div class="data-card card-purple">
             <div class="card-title">平台总商家数</div>
             <div class="card-value">{{ adminData.totalMerchantCount }}</div>
             <div class="card-bg-icon">🏪</div>
@@ -142,7 +139,8 @@ onUnmounted(() => {
 
       <el-row :gutter="20" class="bottom-row">
         <el-col :span="16">
-          <div class="panel-card chart-panel">
+          <div class="panel-card">
+            <div class="panel-header">近 7 天销售趋势</div>
             <div ref="chartRef" class="chart-container"></div>
           </div>
         </el-col>
@@ -157,7 +155,7 @@ onUnmounted(() => {
                 </div>
                 <div class="todo-action">
                   <span class="todo-count">{{ adminData.pendingMerchantAudit }}</span>
-                  <el-button type="primary" size="small" @click="$router.push('/adminMerchant')">去处理</el-button>
+                  <el-button type="danger" plain size="small" @click="$router.push('/admin-merchant')">去处理</el-button>
                 </div>
               </div>
             </div>
@@ -191,7 +189,7 @@ onUnmounted(() => {
           </div>
         </el-col>
         <el-col :span="6">
-          <div class="data-card card-orange">
+          <div class="data-card card-purple">
             <div class="card-title">在售商品数</div>
             <div class="card-value">{{ merchantData.onSaleProductCount }}</div>
             <div class="card-bg-icon">🏷️</div>
@@ -201,7 +199,8 @@ onUnmounted(() => {
 
       <el-row :gutter="20" class="bottom-row">
         <el-col :span="16">
-          <div class="panel-card chart-panel">
+          <div class="panel-card">
+            <div class="panel-header">近 7 天销售趋势</div>
             <div ref="chartRef" class="chart-container"></div>
           </div>
         </el-col>
@@ -216,7 +215,7 @@ onUnmounted(() => {
                 </div>
                 <div class="todo-action">
                   <span class="todo-count">{{ merchantData.pendingShipCount }}</span>
-                  <el-button type="warning" size="small" @click="$router.push('/merchant-order')">去发货</el-button>
+                  <el-button type="warning" plain size="small" @click="$router.push('/merchant-order')">去发货</el-button>
                 </div>
               </div>
             </div>
@@ -228,40 +227,27 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-/* 核心布局：使用 Flex 撑满整个屏幕 */
 .dashboard-container {
   padding: 20px;
-  background-color: #f4f6f8;
-  height: calc(100vh - 60px); /* 减去顶部 Header 的高度 */
+  height: calc(100vh - 60px);
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
 }
 
-.header-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 20px;
-  flex-shrink: 0;
-}
-
-/* ============ 顶部数据卡片 ============ */
 .top-row {
-  flex-shrink: 0; /* 高度固定 */
+  flex-shrink: 0;
   margin-bottom: 20px;
 }
 
 .data-card {
   border-radius: 12px;
-  padding: 20px 24px;
+  padding: 24px;
   position: relative;
   overflow: hidden;
   color: #fff;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
-  /* 加上细细的白边，提升质感 */
-  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .data-card:hover {
@@ -269,78 +255,67 @@ onUnmounted(() => {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
-/* 降低饱和度的暗黑系渐变色，更显高级 */
-.card-red { background: linear-gradient(135deg, #ff4b2b, #c23531); }
-.card-blue { background: linear-gradient(135deg, #4facfe, #2a5298); }
-.card-green { background: linear-gradient(135deg, #43e97b, #38a169); }
-.card-orange { background: linear-gradient(135deg, #fa709a, #d97706); } /* 用橙粉色代替纯黄 */
+/* 新版渐变色，更高级 */
+.card-red { background: linear-gradient(135deg, #ff6b6b, #c0392b); }
+.card-blue { background: linear-gradient(135deg, #48c6ef, #1e3c72); }
+.card-green { background: linear-gradient(135deg, #56ab2f, #1d976c); }
+.card-purple { background: linear-gradient(135deg, #a18cd1, #fbc2eb); }
 
 .card-title {
   font-size: 14px;
   opacity: 0.9;
   margin-bottom: 12px;
-  letter-spacing: 1px;
+  font-weight: 500;
 }
 
 .card-value {
   font-size: 32px;
-  font-weight: 700;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-weight: bold;
 }
 
 .card-bg-icon {
   position: absolute;
-  right: 15px;
-  bottom: -15px;
-  font-size: 90px;
-  opacity: 0.15;
-  z-index: 0;
-  transform: rotate(-10deg);
+  right: 10px;
+  bottom: -10px;
+  font-size: 80px;
+  opacity: 0.2;
 }
 
-/* ============ 底部图表与待办 (自动撑满剩余高度) ============ */
 .bottom-row {
-  flex: 1; /* 占据剩余的所有高度 */
-  min-height: 0; /* 防止溢出 */
+  flex: 1;
+  min-height: 0;
 }
 
 .panel-card {
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-  height: 100%; /* 撑满行高 */
+  height: 100%;
   display: flex;
   flex-direction: column;
-  border: 1px solid #f0f0f0;
-}
-
-.chart-panel {
-  padding: 20px;
-}
-
-.chart-container {
-  flex: 1;
-  width: 100%;
-  height: 100%;
-}
-
-.todo-panel {
-  padding: 24px;
+  border: 1px solid #ebeef5;
 }
 
 .panel-header {
   font-size: 16px;
   font-weight: 600;
-  color: #333;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #f0f0f0;
-  flex-shrink: 0;
+  color: #303133;
+  padding: 20px 20px 10px;
 }
 
-.panel-list {
+.chart-container {
   flex: 1;
-  overflow-y: auto;
+  width: 100%;
+  min-height: 0;
+}
+
+.todo-panel {
+  padding: 0 20px 20px;
+}
+.todo-panel .panel-header {
+  padding: 20px 0 15px;
+  border-bottom: 1px solid #ebeef5;
+  margin-bottom: 15px;
 }
 
 .todo-item {
@@ -351,33 +326,25 @@ onUnmounted(() => {
   background: #f8fafc;
   border-radius: 8px;
   margin-bottom: 12px;
-  transition: all 0.2s;
-  border: 1px solid transparent;
-}
-
-.todo-item:hover {
-  background: #fff;
-  border-color: #e2e8f0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  border: 1px solid #f1f5f9;
 }
 
 .todo-info {
   display: flex;
   align-items: center;
   font-size: 15px;
-  color: #334155;
+  color: #303133;
   font-weight: 500;
 }
 
 .todo-dot {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   margin-right: 12px;
 }
-
-.todo-dot.red { background-color: #ef4444; box-shadow: 0 0 6px rgba(239, 68, 68, 0.4); }
-.todo-dot.orange { background-color: #f59e0b; box-shadow: 0 0 6px rgba(245, 158, 11, 0.4); }
+.todo-dot.red { background-color: #ef4444; }
+.todo-dot.orange { background-color: #f59e0b; }
 
 .todo-action {
   display: flex;
@@ -386,8 +353,8 @@ onUnmounted(() => {
 }
 
 .todo-count {
-  font-size: 20px;
-  font-weight: 700;
-  color: #c23531;
+  font-size: 22px;
+  font-weight: bold;
+  color: #303133;
 }
 </style>

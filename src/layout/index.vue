@@ -87,7 +87,8 @@ const menuList = computed(() => {
       { path: '/merchant-product', title: '商品管理', icon: 'Setting' },
       { path: '/merchant-order', title: '订单管理', icon: 'Document' },
       { path: '/merchant-coupon', title: '优惠券管理', icon: 'Ticket' },
-      { path: '/merchant-seckill', title: '秒杀活动管理', icon: 'Timer'}
+      { path: '/merchant-seckill', title: '秒杀活动管理', icon: 'Timer'},
+      { path: '/merchant-review',title: '评论管理', icon: 'ChatDotSquare' },
     ]
   }
   return []
@@ -114,109 +115,194 @@ const logout = async () => {
 
 <template>
   <div class="common-layout">
-    <el-container class="layout-container">
-      <!-- Header 区域 -->
-      <el-header class="header">
-        <span class="title">HisoutenMall后台管理系统</span>
-        <span class="right_tool">
-          <a href="">
-            <a href="javascript:void(0)" @click="openPwdDialog">
-              <el-icon><EditPen /></el-icon> 修改密码 &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;
+    <el-container class="app-wrapper">
+      <!-- 侧边栏：改为深邃的暗色系 -->
+      <el-aside width="220px" class="sidebar-container">
+        <div class="logo">
+          <span class="logo-icon">H</span>
+          <span class="logo-text">Hisouten Mall</span>
+        </div>
+        <el-menu
+            :router="true"
+            :default-active="$route.path"
+            background-color="#001529"
+            text-color="rgba(255,255,255,0.65)"
+            active-text-color="#ffffff"
+        >
+          <el-menu-item v-for="item in menuList" :key="item.path" :index="item.path">
+            <el-icon><component :is="item.icon" /></el-icon>
+            <span>{{ item.title }}</span>
+          </el-menu-item>
+        </el-menu>
+      </el-aside>
+
+      <el-container>
+        <!-- 顶栏：纯白极简，带一点点呼吸感阴影 -->
+        <el-header class="header">
+          <div class="header-left">
+            <!-- 可以放面包屑或折叠按钮 -->
+          </div>
+          <div class="header-right">
+            <a class="action-item" href="javascript:void(0)" @click="openPwdDialog">
+              <el-icon><EditPen /></el-icon> 修改密码
             </a>
-          </a>
-          <a href="javascript:void(0)" @click="logout">
-            <el-icon><SwitchButton /></el-icon> 退出登录 【{{displayName}}】
-          </a>
-        </span>
-      </el-header>
-      <el-dialog v-model="pwdDialogVisible" title="修改密码" width="400">
-        <el-form :model="pwdForm" :rules="pwdRules" ref="pwdFormRef" label-width="80px">
-          <el-form-item label="旧密码" prop="oldPassword">
-            <el-input v-model="pwdForm.oldPassword" type="password" show-password />
-          </el-form-item>
-          <el-form-item label="新密码" prop="newPassword">
-            <el-input v-model="pwdForm.newPassword" type="password" show-password />
-          </el-form-item>
-          <el-form-item label="确认密码" prop="confirmPassword">
-            <el-input v-model="pwdForm.confirmPassword" type="password" show-password />
-          </el-form-item>
-        </el-form>
-        <template #footer>
-          <el-button @click="pwdDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="submitPwd">确定</el-button>
-        </template>
-      </el-dialog>
+            <el-divider direction="vertical" />
+            <el-dropdown>
+              <span class="user-info">
+                <el-avatar :size="30" src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png" />
+                <span class="username">{{ displayName }}</span>
+              </span>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item @click="logout">退出登录</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
+        </el-header>
 
-      <el-container class="inner-container">
-        <!-- 左侧菜单 -->
-        <el-aside width="200px" class="aside" >
-          <el-menu :router="true">
-            <el-menu-item v-for="item in menuList" :key="item.path" :index="item.path">
-              <el-icon><component :is="item.icon" /></el-icon>
-              {{ item.title }}
-            </el-menu-item>
-          </el-menu>
-        </el-aside>
-
+        <!-- 内容区：浅灰底色，让纯白卡片凸显出来 -->
         <el-main class="main-container">
-          <router-view></router-view>
+          <router-view v-slot="{ Component }">
+            <transition name="fade-transform" mode="out-in">
+              <component :is="Component" />
+            </transition>
+          </router-view>
         </el-main>
       </el-container>
-
     </el-container>
+    <!-- 修改密码弹窗 -->
+    <el-dialog v-model="pwdDialogVisible" title="修改密码" width="400px">
+      <el-form :model="pwdForm" :rules="pwdRules" ref="pwdFormRef" label-width="80px">
+        <el-form-item label="旧密码" prop="oldPassword">
+          <el-input v-model="pwdForm.oldPassword" type="password" show-password />
+        </el-form-item>
+        <el-form-item label="新密码" prop="newPassword">
+          <el-input v-model="pwdForm.newPassword" type="password" show-password />
+        </el-form-item>
+        <el-form-item label="确认密码" prop="confirmPassword">
+          <el-input v-model="pwdForm.confirmPassword" type="password" show-password />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="pwdDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitPwd">确定</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <style scoped>
-/* 最外层：占满全屏，纵向排列 */
-.layout-container {
+/* 整体撑满屏幕 */
+.app-wrapper {
   height: 100vh;
+  width: 100vw;
   overflow: hidden;
 }
 
+/* 侧边栏 */
+.sidebar-container {
+  background-color: #001529;
+  transition: width 0.28s;
+  display: flex;
+  flex-direction: column;
+}
+.logo {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  background: #002140;
+}
+.logo-icon {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  line-height: 28px;
+  text-align: center;
+  background: #e1251b;
+  border-radius: 6px;
+  margin-right: 10px;
+  font-size: 18px;
+}
+/* 覆盖 el-menu 的默认右边框 */
+.el-menu {
+  border-right: none;
+  flex: 1;
+}
+.el-menu-item {
+  margin: 4px 8px;
+  border-radius: 6px;
+}
+.el-menu-item.is-active {
+  background-color: #e1251b !important; /* 京东红高亮 */
+}
+.el-menu-item:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* 顶栏 */
 .header {
-  background-image: linear-gradient(to right, #00547d, #007fa4, #00aaa0, #00d072, #a8eb12);
-  flex-shrink: 0; /* 保证 header 高度不被压缩 */
-}
-
-.title {
-  color: white;
-  font-size: 40px;
-  font-family: 楷体;
-  line-height: 60px;
-  font-weight: bolder;
-}
-
-.right_tool {
-  float: right;
-  line-height: 60px;
-}
-
-a {
-  color: white;
-  text-decoration: none;
-}
-
-/* 内层容器：占满剩下的高度，横向排列 */
-.inner-container {
-  height: calc(100vh - 60px); /* 减去 Header 的高度 */
-  overflow: hidden;
-}
-
-/* 左侧菜单 */
-.aside {
-  width: 220px;
-  border-right: 1px solid #ccc;
-  height: 100%;
+  height: 60px;
   background-color: #fff;
+  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  z-index: 9;
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+.action-item {
+  color: #606266;
+  text-decoration: none;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: color 0.3s;
+}
+.action-item:hover {
+  color: #e1251b;
+}
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.username {
+  font-size: 14px;
+  color: #303133;
+  font-weight: 500;
+}
+
+/* 内容区 */
+.main-container {
+  background-color: #f0f2f5;
+  padding: 20px;
   overflow-y: auto;
 }
 
-/* 右侧主内容区：独立滚动 */
-.main-content {
-  background-color: #f4f4f4;
-  padding: 20px;
-  height: 100%;
-  overflow-y: auto;
+/* 页面切换动画 */
+.fade-transform-enter-active,
+.fade-transform-leave-active {
+  transition: all 0.3s;
+}
+.fade-transform-enter-from {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+.fade-transform-leave-to {
+  opacity: 0;
+  transform: translateX(20px);
 }
 </style>

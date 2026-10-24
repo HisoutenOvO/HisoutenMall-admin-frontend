@@ -219,70 +219,88 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="container">
-    <el-form :inline="true" :model="searchForm" class="search-form">
-      <el-form-item label="活动名称">
-        <el-input v-model="searchForm.keyword" placeholder="按名称搜索" clearable />
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" @click="searchForm.page=1; loadData()">查询</el-button>
-      </el-form-item>
-      <el-form-item style="float: right;">
-        <el-button type="danger" @click="openAddDialog">+ 创建秒杀活动</el-button>
-      </el-form-item>
-    </el-form>
+  <div class="app-container">
+    <!-- 1. 搜索卡片 -->
+    <el-card class="search-card" shadow="never">
+      <el-form :inline="true" :model="searchForm" class="search-form">
+        <el-form-item label="活动名称">
+          <el-input v-model="searchForm.keyword" placeholder="按名称搜索" clearable style="width: 200px" />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" icon="Search" @click="searchForm.page=1; loadData()">查询</el-button>
+          <el-button icon="Refresh" @click="searchForm.keyword = ''; loadData()">重置</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
 
-    <el-table :data="list" v-loading="loading" border stripe>
-      <el-table-column prop="name" label="活动名称" min-width="180" />
-      <el-table-column prop="productCount" label="包含商品数" width="120" align="center" />
-      <el-table-column label="状态" width="100" align="center">
-        <template #default="{ row }">
-          <el-tag :type="row.status === 1 ? 'danger' : (row.status === 0 ? 'warning' : 'info')">
-            {{ formatStatus(row.status) }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="活动时间" width="300" align="center">
-        <template #default="{ row }">
-          {{ row.startTime }} <br> 至 <br> {{ row.endTime }}
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="280" align="center" fixed="right">
-        <template #default="{ row }">
-          <el-button type="primary" size="small" @click="openDetail(row.id)">管理商品</el-button>
+    <!-- 2. 数据表格卡片 -->
+    <el-card class="table-card" shadow="never">
+      <div class="table-toolbar">
+        <el-button type="primary" icon="Plus" @click="openAddDialog">创建秒杀活动</el-button>
+      </div>
 
-          <!-- 只有未开始(0)能改 -->
-          <el-button
-              v-if="row.status === 0"
-              type="warning"
-              size="small"
-              @click="openEditActivityDialog(row)"
-          >修改</el-button>
+      <el-table :data="list" v-loading="loading" style="width: 100%">
+        <el-table-column prop="name" label="活动名称" min-width="200">
+          <template #default="{ row }">
+            <span style="font-weight: 500; color: #303133;">{{ row.name }}</span>
+          </template>
+        </el-table-column>
 
-          <!-- 未开始(0) 和 已结束(2) 能删 -->
-          <el-button
-              v-if="row.status === 0 || row.status === 2"
-              type="danger"
-              size="small"
-              @click="handleDeleteActivity(row.id)"
-          >删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+        <el-table-column prop="productCount" label="包含商品数" width="120" align="center" />
 
-    <div class="pagination-container">
-      <el-pagination
-          v-model:current-page="searchForm.page"
-          v-model:page-size="searchForm.pageSize"
-          :total="total"
-          layout="total, prev, pager, next"
-          @current-change="loadData"
-      />
-    </div>
+        <el-table-column label="状态" width="120" align="center">
+          <template #default="{ row }">
+            <el-tag
+                :type="row.status === 1 ? 'danger' : (row.status === 0 ? 'warning' : 'info')"
+                effect="light" round
+            >
+              {{ formatStatus(row.status) }}
+            </el-tag>
+          </template>
+        </el-table-column>
 
-    <!-- 弹窗：动态标题和按钮 -->
-    <el-dialog v-model="dialogVisible" :title="isEditActivity ? '修改秒杀活动' : '创建秒杀活动'" width="450px">
-      <el-form :model="activityForm" label-width="80px">
+        <el-table-column label="活动时间" width="280" align="center">
+          <template #default="{ row }">
+            <div style="font-size: 13px; color: #606266;">
+              {{ row.startTime }} <br>
+              <span style="color: #909399; font-size: 12px;">至</span> <br>
+              {{ row.endTime }}
+            </div>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="操作" width="220" align="center" fixed="right">
+          <template #default="{ row }">
+            <el-button type="primary" link @click="openDetail(row.id)">管理商品</el-button>
+            <el-button
+                v-if="row.status === 0"
+                type="warning" link
+                @click="openEditActivityDialog(row)"
+            >修改</el-button>
+            <el-button
+                v-if="row.status === 0 || row.status === 2"
+                type="danger" link
+                @click="handleDeleteActivity(row.id)"
+            >删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <div class="pagination-container">
+        <el-pagination
+            v-model:current-page="searchForm.page"
+            v-model:page-size="searchForm.pageSize"
+            :total="total"
+            background
+            layout="total, prev, pager, next"
+            @current-change="loadData"
+        />
+      </div>
+    </el-card>
+
+    <!-- 弹窗：创建/修改活动 -->
+    <el-dialog v-model="dialogVisible" :title="isEditActivity ? '修改秒杀活动' : '创建秒杀活动'" width="500px" class="custom-dialog">
+      <el-form :model="activityForm" label-width="90px">
         <el-form-item label="活动名称">
           <el-input v-model="activityForm.name" placeholder="如：双十一限时秒杀" />
         </el-form-item>
@@ -304,28 +322,34 @@ onMounted(() => {
       </template>
     </el-dialog>
 
-    <el-drawer v-model="drawerVisible" title="秒杀活动详情" size="55%">
+    <!-- 抽屉：活动详情 -->
+    <el-drawer v-model="drawerVisible" title="秒杀活动详情" size="60%">
       <div v-if="currentDetail">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <h3>活动：{{ currentDetail.name }}</h3>
+        <div class="drawer-header">
+          <h3 class="drawer-title">活动：{{ currentDetail.name }}</h3>
           <el-button
               v-if="currentDetail.status === 0"
               type="primary"
+              icon="Plus"
               @click="openAddProduct(currentDetail.id)"
-          >+ 添加秒杀商品</el-button>
+          >添加秒杀商品</el-button>
         </div>
 
-        <el-table :data="currentDetail.products" border style="margin-top: 15px;">
-          <el-table-column label="图片" width="80" align="center">
+        <el-table :data="currentDetail.products" border style="margin-top: 15px; border-radius: 8px;">
+          <el-table-column label="商品信息" min-width="220">
             <template #default="{ row }">
-              <el-image :src="row.image" style="width: 50px; height: 50px" />
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <el-image :src="row.image" style="width: 40px; height: 40px; border-radius: 4px;" fit="cover" />
+                <span style="font-weight: 500;">{{ row.productName }}</span>
+              </div>
             </template>
           </el-table-column>
-          <el-table-column prop="productName" label="商品名称" min-width="150" />
           <el-table-column label="规格" width="120">
-            <template #default="{ row }">{{ formatSpecs(row.skuSpecs) }}</template>
+            <template #default="{ row }">
+              <span style="font-size: 12px; color: #909399;">{{ formatSpecs(row.skuSpecs) }}</span>
+            </template>
           </el-table-column>
-          <el-table-column label="秒杀价/原价" width="150">
+          <el-table-column label="价格设定" width="160">
             <template #default="{ row }">
               <div style="color: #e1251b; font-weight: bold;">秒杀: ￥{{ row.seckillPrice }}</div>
               <div style="color: #999; font-size: 12px; text-decoration: line-through;">原价: ￥{{ row.originalPrice }}</div>
@@ -334,39 +358,40 @@ onMounted(() => {
           <el-table-column prop="seckillStock" label="秒杀库存" width="100" align="center" />
           <el-table-column label="操作" width="100" align="center" v-if="currentDetail.status === 0">
             <template #default="{ row }">
-              <el-button type="danger" size="small" @click="handleRemoveProduct(row.id)">移除</el-button>
+              <el-button type="danger" link @click="handleRemoveProduct(row.id)">移除</el-button>
             </template>
           </el-table-column>
         </el-table>
       </div>
     </el-drawer>
 
-    <el-dialog v-model="productDialogVisible" title="添加秒杀商品" width="900px" top="5vh">
+    <!-- 弹窗：添加秒杀商品（左右分栏） -->
+    <el-dialog v-model="productDialogVisible" title="添加秒杀商品" width="1000px" top="5vh" class="custom-dialog">
       <div class="add-product-layout">
         <div class="left-list">
-          <h4>我的商品</h4>
+          <h4 class="section-title">选择商品</h4>
           <el-table
               :data="myProducts"
               border
-              height="400px"
+              height="420px"
               highlight-current-row
               @current-change="handleProductSelect"
           >
             <el-table-column prop="name" label="商品名称" show-overflow-tooltip />
-            <el-table-column prop="minPrice" label="最低价" width="80" />
+            <el-table-column prop="minPrice" label="最低价" width="80" align="center" />
           </el-table>
         </div>
 
         <div class="right-skus">
-          <h4>配置 SKU 秒杀信息</h4>
+          <h4 class="section-title">配置 SKU 秒杀信息</h4>
           <div v-if="!selectedProductDetail" class="empty-tip">
-            请在左侧选择一个商品
+            请在左侧列表点击选择一个商品
           </div>
           <el-table
               v-else
               :data="selectedSkus"
               border
-              height="400px"
+              height="420px"
               v-loading="productLoading"
           >
             <el-table-column label="选择" width="55" align="center">
@@ -383,14 +408,12 @@ onMounted(() => {
                 <span style="font-size: 12px; color: #999;">库存: {{ row.maxStock }}</span>
               </template>
             </el-table-column>
-            <el-table-column label="秒杀价" width="120">
+            <el-table-column label="秒杀价" width="130">
               <template #default="{ row }">
                 <el-input-number
                     v-model="row.seckillPrice"
                     :precision="2" :step="1" :min="0.01" :max="row.originalPrice - 0.01"
-                    size="small"
-                    style="width: 100%;"
-                    :disabled="!row.checked"
+                    size="small" style="width: 100%;" :disabled="!row.checked"
                 />
               </template>
             </el-table-column>
@@ -399,9 +422,7 @@ onMounted(() => {
                 <el-input-number
                     v-model="row.seckillStock"
                     :min="1" :max="row.maxStock"
-                    size="small"
-                    style="width: 100%;"
-                    :disabled="!row.checked"
+                    size="small" style="width: 100%;" :disabled="!row.checked"
                 />
               </template>
             </el-table-column>
@@ -409,17 +430,13 @@ onMounted(() => {
               <template #default="{ row }">
                 <el-input-number
                     v-model="row.limitPerUser"
-                    :min="1"
-                    size="small"
-                    style="width: 100%;"
-                    :disabled="!row.checked"
+                    :min="1" size="small" style="width: 100%;" :disabled="!row.checked"
                 />
               </template>
             </el-table-column>
           </el-table>
         </div>
       </div>
-
       <template #footer>
         <el-button @click="productDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="submitAddProduct">确认添加</el-button>
@@ -429,11 +446,19 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.container { padding: 20px; background: #fff; min-height: calc(100vh - 60px); }
-.search-form { margin-bottom: 20px; padding: 15px 15px 0; background: #f8f9fa; border-radius: 6px; }
-.pagination-container { margin-top: 20px; display: flex; justify-content: flex-end; padding-bottom: 20px; }
+.app-container { padding: 0; }
+.search-card { margin-bottom: 16px; border-radius: 8px; border: none; }
+.table-card { border-radius: 8px; border: none; }
+.table-toolbar { margin-bottom: 16px; display: flex; justify-content: flex-start; }
+.pagination-container { margin-top: 20px; display: flex; justify-content: flex-end; }
+
+/* 弹窗与抽屉美化 */
+.drawer-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #ebeef5; padding-bottom: 15px; }
+.drawer-title { font-size: 16px; font-weight: 600; color: #303133; margin: 0; }
+.section-title { margin: 0 0 15px 0; font-size: 15px; font-weight: 600; color: #303133; border-left: 4px solid #e1251b; padding-left: 10px; line-height: 1; }
+
 .add-product-layout { display: flex; gap: 20px; }
 .left-list { flex: 0 0 35%; border-right: 1px solid #ebeef5; padding-right: 20px; }
 .right-skus { flex: 1; }
-.empty-tip { height: 400px; display: flex; justify-content: center; align-items: center; color: #909399; border: 1px dashed #ebeef5; border-radius: 4px; }
+.empty-tip { height: 420px; display: flex; justify-content: center; align-items: center; color: #909399; border: 1px dashed #dcdfe6; border-radius: 8px; background: #fafafa; }
 </style>

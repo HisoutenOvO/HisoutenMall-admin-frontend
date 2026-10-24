@@ -1,0 +1,44 @@
+/* 让所有页面卡片有高级质感 */
+.el-card {
+    border: none !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05) !important;
+}
+
+/* 表格去掉死板的纵向边框，表头变浅灰 */
+.el-table {
+    --el-table-border-color: #ebeef5;
+    --el-table-header-bg-color: #f8f9fa;
+    border-radius: 6px;
+}
+.el-table th.el-table__cell {
+    font-weight: 600;
+    color: #303133;
+    background-color: #f8f9fa !important;
+}
+
+/* 搜索表单区域美化 */
+.search-form {
+    background-color: #fff;
+    padding: 20px 20px 0;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.03);
+}
+
+/* 分页器靠右并加下边距 */
+.pagination-container {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* 按钮圆角微调 */
+.el-button {
+    border-radius: 4px;
+}
+
+/* 弹窗圆角 */
+.el-dialog {
+    border-radius: 8px !important;
+}

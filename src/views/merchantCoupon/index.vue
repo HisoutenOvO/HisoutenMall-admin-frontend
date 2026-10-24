@@ -164,70 +164,89 @@ onMounted(loadData)
 </script>
 
 <template>
-  <div class="container">
-    <el-form :inline="true" :model="searchForm" class="search-form">
-      <el-form-item label="券名称">
-        <el-input v-model="searchForm.keyword" placeholder="按名称搜索" clearable />
-      </el-form-item>
-      <el-form-item label="类型">
-        <el-select v-model="searchForm.type" placeholder="全部" clearable style="width: 120px">
-          <el-option label="满减券" :value="1" />
-          <el-option label="折扣券" :value="2" />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" @click="searchForm.page=1; loadData()">查询</el-button>
-        <el-button @click="searchForm.keyword=''; searchForm.type=undefined; loadData()">重置</el-button>
-        <el-button type="success" @click="openAdd">发布优惠券</el-button>
-      </el-form-item>
-    </el-form>
+  <div class="app-container">
+    <!-- 1. 搜索卡片 -->
+    <el-card class="search-card" shadow="never">
+      <el-form :inline="true" :model="searchForm" class="search-form">
+        <el-form-item label="券名称">
+          <el-input v-model="searchForm.keyword" placeholder="按名称搜索" clearable style="width: 200px" />
+        </el-form-item>
+        <el-form-item label="类型">
+          <el-select v-model="searchForm.type" placeholder="全部类型" clearable style="width: 120px">
+            <el-option label="满减券" :value="1" />
+            <el-option label="折扣券" :value="2" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" icon="Search" @click="searchForm.page=1; loadData()">查询</el-button>
+          <el-button icon="Refresh" @click="searchForm.keyword=''; searchForm.type=undefined; loadData()">重置</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
 
-    <el-table :data="list" v-loading="loading" border stripe>
-      <el-table-column prop="name" label="优惠券名称" width="280" align="center" />
-      <el-table-column label="面额/门槛" width="250" align="center">
-        <template #default="{ row }">
-          <el-tag size="small" :type="row.type === 1 ? 'danger' : 'warning'" style="margin-right: 5px">
-            {{ formatType(row.type) }}
-          </el-tag>
-          <span style="font-weight: bold; color: #e1251b;">{{ formatValue(row) }}</span>
-          <span v-if="row.minAmount > 0" style="color: #999; font-size: 12px; margin-left: 5px;">
-            (满{{ row.minAmount }}用)
-          </span>
-        </template>
-      </el-table-column>
-      <el-table-column label="库存(剩余/总量)" width="160" align="center">
-        <template #default="{ row }">
-          <span :style="{ color: row.remain === 0 ? '#f56c6c' : '' }">{{ row.remain }}</span> / {{ row.total }}
-        </template>
-      </el-table-column>
-      <el-table-column label="状态" width="120" align="center">
-        <template #default="{ row }">
-          <el-tag :type="getStatusType(row.status)" size="small">{{ formatStatus(row.status) }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" align="center" fixed="right">
-        <template #default="{ row }">
-          <el-button type="primary" size="small" @click="openEdit(row.id)">编辑</el-button>
-          <el-button type="info" size="small" @click="openDetail(row.id)">详情</el-button>
-          <el-button type="danger" size="small" @click="handleDelete(row.id)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <!-- 2. 数据表格卡片 -->
+    <el-card class="table-card" shadow="never">
+      <div class="table-toolbar">
+        <el-button type="primary" icon="Plus" @click="openAdd">发布优惠券</el-button>
+      </div>
 
-    <div class="pagination-container">
-      <el-pagination
-          v-model:current-page="searchForm.page"
-          v-model:page-size="searchForm.pageSize"
-          :total="total"
-          :page-sizes="[10, 20, 50]"
-          layout="total, sizes, prev, pager, next"
-          @size-change="loadData"
-          @current-change="loadData"
-      />
-    </div>
+      <el-table :data="list" v-loading="loading" style="width: 100%">
+        <el-table-column prop="name" label="优惠券名称" min-width="200">
+          <template #default="{ row }">
+            <span style="font-weight: 500; color: #303133;">{{ row.name }}</span>
+          </template>
+        </el-table-column>
 
-    <!-- 新增/修改弹窗 -->
-    <el-dialog v-model="formDialogVisible" :title="isEdit ? '修改优惠券' : '发布优惠券'" width="550px">
+        <el-table-column label="面额/门槛" width="220">
+          <template #default="{ row }">
+            <el-tag size="small" :type="row.type === 1 ? 'danger' : 'warning'" effect="light" style="margin-right: 6px">
+              {{ formatType(row.type) }}
+            </el-tag>
+            <span style="font-weight: bold; color: #e1251b; font-size: 15px;">{{ formatValue(row) }}</span>
+            <span v-if="row.minAmount > 0" style="color: #909399; font-size: 12px; margin-left: 5px;">
+              (满{{ row.minAmount }}用)
+            </span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="发放进度(剩余/总量)" width="160" align="center">
+          <template #default="{ row }">
+            <span :style="{ color: row.remain === 0 ? '#f56c6c' : '#303133', fontWeight: 600 }">{{ row.remain }}</span>
+            <span style="color: #909399;"> / {{ row.total }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="状态" width="120" align="center">
+          <template #default="{ row }">
+            <el-tag :type="getStatusType(row.status)" effect="light" round>{{ formatStatus(row.status) }}</el-tag>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="操作" align="center" width="200" fixed="right">
+          <template #default="{ row }">
+            <el-button type="primary" link @click="openEdit(row.id)">编辑</el-button>
+            <el-button type="info" link @click="openDetail(row.id)">详情</el-button>
+            <el-button type="danger" link @click="handleDelete(row.id)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <div class="pagination-container">
+        <el-pagination
+            v-model:current-page="searchForm.page"
+            v-model:page-size="searchForm.pageSize"
+            :total="total"
+            :page-sizes="[10, 20, 50]"
+            background
+            layout="total, sizes, prev, pager, next"
+            @size-change="loadData"
+            @current-change="loadData"
+        />
+      </div>
+    </el-card>
+
+    <!-- 弹窗：新增/修改优惠券 -->
+    <el-dialog v-model="formDialogVisible" :title="isEdit ? '修改优惠券' : '发布优惠券'" width="550px" class="custom-dialog">
       <el-form :model="formData" :rules="rules" ref="formRef" label-width="100px">
         <el-form-item label="券名称" prop="name">
           <el-input v-model="formData.name" placeholder="如：双十一大促满减券" />
@@ -240,53 +259,60 @@ onMounted(loadData)
           </el-radio-group>
         </el-form-item>
 
-        <el-form-item :label="formData.type === 1 ? '抵扣金额' : '折扣率(如0.85)'" prop="value">
-          <el-input-number v-model="formData.value" :precision="2" :step="formData.type === 1 ? 10 : 0.05" :min="0" :disabled="isEdit" style="width: 100%" />
-        </el-form-item>
-
-        <el-form-item label="最低门槛" prop="minAmount">
-          <el-input-number v-model="formData.minAmount" :precision="2" :step="10" :min="0" :disabled="isEdit" style="width: 100%" />
-        </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item :label="formData.type === 1 ? '抵扣金额' : '折扣率'" prop="value">
+              <el-input-number v-model="formData.value" :precision="2" :step="formData.type === 1 ? 10 : 0.05" :min="0" :disabled="isEdit" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="最低门槛" prop="minAmount">
+              <el-input-number v-model="formData.minAmount" :precision="2" :step="10" :min="0" :disabled="isEdit" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
 
         <el-form-item label="发放总量" prop="total">
           <el-input-number v-model="formData.total" :min="1" :disabled="isEdit" style="width: 100%" />
         </el-form-item>
 
-        <el-form-item label="开始时间" prop="startTime">
-          <el-date-picker
-              v-model="formData.startTime" type="datetime" placeholder="开始时间"
-              value-format="YYYY-MM-DD HH:mm:ss" style="width: 100%" :disabled="isEdit"
-          />
-        </el-form-item>
-
-        <el-form-item label="结束时间" prop="endTime">
-          <el-date-picker
-              v-model="formData.endTime" type="datetime" placeholder="结束时间"
-              value-format="YYYY-MM-DD HH:mm:ss" style="width: 100%"
-          />
-        </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="开始时间" prop="startTime">
+              <el-date-picker v-model="formData.startTime" type="datetime" placeholder="选择时间" value-format="YYYY-MM-DD HH:mm:ss" style="width: 100%" :disabled="isEdit" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="结束时间" prop="endTime">
+              <el-date-picker v-model="formData.endTime" type="datetime" placeholder="选择时间" value-format="YYYY-MM-DD HH:mm:ss" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
       <template #footer>
         <el-button @click="formDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="save">保存</el-button>
+        <el-button type="primary" @click="save">保存提交</el-button>
       </template>
     </el-dialog>
 
-    <!-- 详情弹窗 -->
-    <el-dialog v-model="detailDialogVisible" title="优惠券详情" width="500px">
+    <!-- 弹窗：优惠券详情 -->
+    <el-dialog v-model="detailDialogVisible" title="优惠券完整详情" width="500px" class="custom-dialog">
       <el-descriptions v-if="couponDetail" :column="1" border>
-        <el-descriptions-item label="券名称">{{ couponDetail.name }}</el-descriptions-item>
+        <el-descriptions-item label="券名称">
+          <span style="font-weight: 500;">{{ couponDetail.name }}</span>
+        </el-descriptions-item>
         <el-descriptions-item label="面额/门槛">
-          {{ formatValue(couponDetail) }}，满 {{ couponDetail.minAmount }} 元可用
+          <span style="color: #e1251b; font-weight: bold;">{{ formatValue(couponDetail) }}</span>，
+          满 {{ couponDetail.minAmount }} 元可用
         </el-descriptions-item>
         <el-descriptions-item label="发放情况">
-          总量 {{ couponDetail.total }} 张，剩余 {{ couponDetail.remain }} 张
+          总量 <b>{{ couponDetail.total }}</b> 张，剩余 <b>{{ couponDetail.remain }}</b> 张
         </el-descriptions-item>
         <el-descriptions-item label="有效期">
           {{ couponDetail.startTime }} <br/> 至 <br/> {{ couponDetail.endTime }}
         </el-descriptions-item>
         <el-descriptions-item label="当前状态">
-          <el-tag :type="getStatusType(couponDetail.status)" size="small">
+          <el-tag :type="getStatusType(couponDetail.status)" effect="light" round>
             {{ formatStatus(couponDetail.status) }}
           </el-tag>
         </el-descriptions-item>
@@ -299,7 +325,14 @@ onMounted(loadData)
 </template>
 
 <style scoped>
-.container { padding: 20px; background: #fff; min-height: calc(100vh - 60px); }
-.search-form { margin-bottom: 20px; padding: 15px 15px 0; background: #f8f9fa; border-radius: 6px; }
-.pagination-container { margin-top: 20px; display: flex; justify-content: flex-end; padding-bottom: 20px; }
+.app-container { padding: 0; }
+.search-card { margin-bottom: 16px; border-radius: 8px; border: none; }
+.table-card { border-radius: 8px; border: none; }
+.table-toolbar { margin-bottom: 16px; display: flex; justify-content: flex-start; }
+.pagination-container { margin-top: 20px; display: flex; justify-content: flex-end; }
+
+/* 弹窗美化 */
+.custom-dialog :deep(.el-dialog__body) {
+  padding: 20px 30px;
+}
 </style>
