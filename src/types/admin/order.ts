@@ -3,7 +3,7 @@ import type { PageQuery } from '@/types/common'
 export interface AdminOrderPageQueryDTO extends PageQuery {
     orderNo?: string
     merchantName?: string
-    buyerUsername?: string // 注意这里是 buyerUsername
+    buyerName?: string
     status?: number
 }
 
@@ -31,7 +31,7 @@ export interface AdminOrderPageResultVO {
 export interface AdminOrderDetailVO {
     orderNo: string
     status: number
-    buyerUsername: string
+    buyerName: string
     merchantName: string
     createTime: string
     payTime: string | null

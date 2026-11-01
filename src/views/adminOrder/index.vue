@@ -6,7 +6,7 @@ import type { AdminOrderPageQueryDTO, AdminOrderPageResultVO, AdminOrderDetailVO
 import { formatSpecs } from '@/utils/format'
 
 const searchForm = ref<AdminOrderPageQueryDTO>({
-  page: 1, pageSize: 10, orderNo: '', merchantName: '', buyerUsername: '', status: undefined
+  page: 1, pageSize: 10, orderNo: '', merchantName: '', buyerName: '', status: undefined
 })
 const list = ref<AdminOrderPageResultVO[]>([])
 const total = ref(0)
@@ -56,7 +56,7 @@ onMounted(() => void loadData())
           <el-input v-model="searchForm.merchantName" placeholder="按商家搜索" clearable />
         </el-form-item>
         <el-form-item label="买家账号">
-          <el-input v-model="searchForm.buyerUsername" placeholder="按买家搜索" clearable />
+          <el-input v-model="searchForm.buyerName" placeholder="按买家搜索" clearable />
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="searchForm.status" placeholder="全部" clearable style="width: 120px">
@@ -68,7 +68,7 @@ onMounted(() => void loadData())
         </el-form-item>
         <el-form-item>
           <el-button type="primary" icon="Search" @click="searchForm.page=1; loadData()">查询</el-button>
-          <el-button icon="Refresh" @click="searchForm.orderNo=''; searchForm.merchantName=''; searchForm.buyerUsername=''; searchForm.status=undefined; loadData()">重置</el-button>
+          <el-button icon="Refresh" @click="searchForm.orderNo=''; searchForm.merchantName=''; searchForm.buyerName=''; searchForm.status=undefined; loadData()">重置</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -82,7 +82,7 @@ onMounted(() => void loadData())
       <el-table :data="list" v-loading="loading" style="width: 100%">
         <el-table-column prop="orderNo" label="订单号" width="220" />
         <el-table-column prop="merchantName" label="商家名称" min-width="150" show-overflow-tooltip />
-        <el-table-column prop="buyerUsername" label="买家" width="120" />
+        <el-table-column prop="buyerName" label="买家" width="120" />
         <el-table-column prop="payAmount" label="实付金额" width="120">
           <template #default="{ row }"><span style="color: #e1251b; font-weight: bold;">￥{{ row.payAmount }}</span></template>
         </el-table-column>
@@ -120,7 +120,7 @@ onMounted(() => void loadData())
           <el-descriptions-item label="状态">
             <el-tag :type="getStatusType(currentOrder.status)" round>{{ formatStatus(currentOrder.status) }}</el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="买家">{{ currentOrder.buyerUsername }}</el-descriptions-item>
+          <el-descriptions-item label="买家">{{ currentOrder.buyerName }}</el-descriptions-item>
           <el-descriptions-item label="商家">{{ currentOrder.merchantName }}</el-descriptions-item>
           <el-descriptions-item label="下单时间">{{ currentOrder.createTime }}</el-descriptions-item>
           <el-descriptions-item label="支付时间">{{ currentOrder.payTime || '未支付' }}</el-descriptions-item>
